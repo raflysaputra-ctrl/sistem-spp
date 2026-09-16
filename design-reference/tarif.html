@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Master Data - EduPay Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Courier+Prime&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#1e40af",
+                      "outline": "#757684",
+                      "background": "#f7f9fb",
+                      "secondary-fixed": "#d3e4fe",
+                      "error": "#ba1a1a",
+                      "surface-container-highest": "#e0e3e5",
+                      "primary-fixed": "#dde1ff",
+                      "on-primary-fixed": "#001453",
+                      "inverse-primary": "#b8c4ff",
+                      "surface-container-low": "#f2f4f6",
+                      "on-background": "#191c1e",
+                      "secondary-container": "#d0e1fb",
+                      "inverse-surface": "#2d3133",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#b8c4ff",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#a8b8ff",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "on-surface": "#191c1e",
+                      "tertiary-fixed": "#ffdbce",
+                      "on-tertiary-fixed": "#380d00",
+                      "surface-tint": "#3755c3",
+                      "on-surface-variant": "#444653",
+                      "on-tertiary-container": "#ffa583",
+                      "surface-container-high": "#e6e8ea",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed-variant": "#173bab",
+                      "surface": "#f7f9fb",
+                      "surface-container-lowest": "#ffffff",
+                      "primary": "#00288e",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "on-tertiary-fixed-variant": "#802a00",
+                      "surface-dim": "#d8dadc",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#e0e3e5",
+                      "on-secondary-fixed": "#0b1c30",
+                      "inverse-on-surface": "#eff1f3",
+                      "tertiary": "#611e00",
+                      "surface-bright": "#f7f9fb",
+                      "surface-container": "#eceef0",
+                      "secondary": "#505f76",
+                      "tertiary-container": "#872d00",
+                      "on-secondary-container": "#54647a",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#c4c5d5"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "stack-sm": "8px",
+                      "container-max": "1440px",
+                      "sidebar-width": "260px",
+                      "stack-lg": "24px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "mono-data": [
+                              "Courier Prime"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "mono-data": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen">
+<!-- SideNavBar -->
+<nav class="hidden md:flex w-sidebar-width h-screen fixed left-0 top-0 border-r border-outline-variant bg-surface-container-lowest flex-col py-stack-lg z-50">
+<div class="px-gutter mb-8">
+<div class="flex items-center gap-3">
+<img alt="School Logo" class="w-10 h-10 rounded-lg object-cover" data-alt="A clean, minimalist abstract logo design suitable for a modern educational institution's payment system. The logo uses a palette of primary blue and crisp white, evoking trust and efficiency. The style is flat corporate vector art, highly professional, with no complex shading or realistic details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6CSgG3KDaUV3oW3DKeh-M8lRMx7xdYLMOpqUpUIcv3pJyXTSFJLvQYNKmmJ7LRSZFnT49v9sULbllbmwyOIA36PzGBc3k_OuuJOwfLIIAs2hvUS3lW6HIVR2mO7a-HNYFGtsK0GphlvRbWIo1WsAUpxbolOgP1iJTtV3gF2QEiGN5i9fFqabPSQCHuKK8RB5FfGWUl1kY2pm5BTaxfdN7zkvjvXoc8NisTCj8idohZVjiObPixPDUNA"/>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">EduPay Admin</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Petugas Tata Usaha</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1 flex-1 px-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface-variant transition-colors" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container text-primary font-semibold cursor-pointer active:scale-95 duration-150 mx-2" href="#">
+<span class="material-symbols-outlined fill text-[20px]" data-icon="database" data-weight="fill">database</span>
+<span class="font-body-md text-body-md">Master Data</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface-variant transition-colors" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Pembayaran</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface-variant transition-colors" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Laporan</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface-variant transition-colors" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Pengaturan</span>
+</a>
+</div>
+<div class="px-gutter mt-auto mb-6">
+<button class="w-full bg-primary text-on-primary font-body-md text-body-md py-3 rounded-lg hover:bg-primary-container transition-colors active:scale-95 duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Input Transaksi Baru
+            </button>
+</div>
+<div class="border-t border-outline-variant pt-4 px-2 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+<span class="font-body-md text-body-md">Bantuan</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error-container transition-colors cursor-pointer active:scale-95 duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+<span class="font-body-md text-body-md">Keluar</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="md:ml-sidebar-width min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between px-gutter py-stack-md bg-surface sticky top-0 z-40 border-b border-outline-variant transition-all duration-200">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Sistem Pembayaran SPP</h2>
+<div class="hidden md:flex gap-6 ml-8">
+<a class="text-primary border-b-2 border-primary font-body-md text-body-md pb-1" href="#">T.A. 2026/2027</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container rounded-full">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+</button>
+<div class="flex items-center gap-3 ml-2 border-l border-outline-variant pl-4 cursor-pointer hover:bg-surface-container p-2 rounded-lg transition-colors">
+<img alt="Petugas TU Avatar" class="w-8 h-8 rounded-full object-cover" data-alt="A professional headshot of a friendly school administrative staff member, wearing neat business casual attire. The background is a bright, softly blurred school office setting. The lighting is warm and natural, conveying approachability and competence. Modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY7SDSh6Or5U1Al5Nkq-E_nktblOheQmzlNzQ3rFfykdt5I49wdxYzURAMVEXSE5Ul7bVsJqV0tsKEJ3FK1G_52apUfkWBpUJQmZCQ38Ngmvuji6dEAGickNx1fpNu5hnaCHW3kfSFIyi1xCOXLQN6uQRL2GND1suC62StNau6iFbVSsoTJ_1aL0DP2nDbRKziHsGnYmSUgjI-tIxOH7obIKWgtd2t2gDoDVlVmaJUPc5r5I9Vxgr2gw"/>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold hidden lg:block">Profil Petugas</span>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-gutter max-w-container-max mx-auto w-full">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">Master Data</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Kelola data dasar akademik dan referensi tarif sistem.</p>
+</div>
+</div>
+<!-- Bento Grid Layout for Master Data -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Tarif SPP Card (Spans 8 cols) -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col relative overflow-hidden group hover:border-primary-fixed transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-center mb-6 pl-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary bg-primary-fixed p-2 rounded-lg" data-icon="attach_money">attach_money</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Tarif SPP Aktif</h3>
+</div>
+<button class="text-primary hover:bg-primary-fixed px-3 py-1.5 rounded-lg transition-colors font-label-md text-label-md flex items-center gap-1 border border-transparent hover:border-primary">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                            Ubah Tarif
+                        </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 pl-4">
+<div class="bg-surface p-4 rounded-lg border border-outline-variant/50">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">Tingkat 1 (Kelas X)</p>
+<p class="font-mono-data text-mono-data text-display-lg text-on-surface font-bold">Rp 150.000<span class="text-body-sm font-normal text-on-surface-variant">/bln</span></p>
+</div>
+<div class="bg-surface p-4 rounded-lg border border-outline-variant/50">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">Tingkat 2 (Kelas XI)</p>
+<p class="font-mono-data text-mono-data text-display-lg text-on-surface font-bold">Rp 120.000<span class="text-body-sm font-normal text-on-surface-variant">/bln</span></p>
+</div>
+<div class="bg-surface p-4 rounded-lg border border-outline-variant/50">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">Tingkat 3 (Kelas XII)</p>
+<p class="font-mono-data text-mono-data text-display-lg text-on-surface font-bold">Rp 120.000<span class="text-body-sm font-normal text-on-surface-variant">/bln</span></p>
+</div>
+</div>
+</div>
+<!-- Tahun Ajaran Card (Spans 4 cols) -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col relative overflow-hidden group hover:border-secondary transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex justify-between items-center mb-6 pl-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary bg-secondary-fixed p-2 rounded-lg" data-icon="event_note">event_note</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Tahun Ajaran</h3>
+</div>
+</div>
+<div class="pl-4 flex-1 flex flex-col justify-center">
+<div class="bg-secondary-fixed/30 p-4 rounded-lg border border-secondary/20 mb-3 flex justify-between items-center">
+<div>
+<p class="font-headline-md text-headline-md text-on-surface font-bold">2026/2027</p>
+<p class="font-label-md text-label-md text-secondary uppercase">Semester Ganjil</p>
+</div>
+<span class="bg-[#e6f4ea] text-[#137333] px-2 py-1 rounded font-label-md text-[10px] uppercase tracking-wider">Aktif</span>
+</div>
+<button class="w-full text-secondary border border-outline-variant hover:border-secondary hover:bg-surface-container py-2 rounded-lg transition-colors font-label-md text-label-md">
+                            Kelola Periode
+                        </button>
+</div>
+</div>
+<!-- Jurusan dan Kelas Card (Spans 12 cols) -->
+<div class="lg:col-span-12 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col relative overflow-hidden group hover:border-tertiary transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-center mb-6 pl-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary bg-tertiary-fixed p-2 rounded-lg" data-icon="school">school</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Struktur Akademik</h3>
+</div>
+<button class="text-tertiary hover:bg-tertiary-fixed px-3 py-1.5 rounded-lg transition-colors font-label-md text-label-md flex items-center gap-1 border border-transparent hover:border-tertiary">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                            Kelola Struktur
+                        </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4">
+<div class="flex flex-col gap-3">
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase">Program Keahlian (Jurusan)</h4>
+<div class="flex flex-col gap-2">
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 flex justify-between items-center">
+<span class="font-body-md text-body-md font-semibold">Pengembangan Perangkat Lunak (PPL)</span>
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs text-on-surface-variant">Aktif</span>
+</div>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 flex justify-between items-center">
+<span class="font-body-md text-body-md font-semibold">Desain Komunikasi Visual (DKV)</span>
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs text-on-surface-variant">Aktif</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase">Rombongan Belajar (Rombel)</h4>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 text-center">
+<span class="font-body-md text-body-md font-semibold">Rombel 1</span>
+</div>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 text-center">
+<span class="font-body-md text-body-md font-semibold">Rombel 2</span>
+</div>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 text-center">
+<span class="font-body-md text-body-md font-semibold">Rombel 3</span>
+</div>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 text-center">
+<span class="font-body-md text-body-md font-semibold">Rombel 4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
