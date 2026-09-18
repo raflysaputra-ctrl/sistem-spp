@@ -22,6 +22,14 @@
         </div>
     </div>
 
+    @if (session('status'))
+        <div class="flash-message">{{ session('status') }}</div>
+    @endif
+
+    @if ($errors->has('pembayaran'))
+        <div class="error-message">{{ $errors->first('pembayaran') }}</div>
+    @endif
+
     <section class="data-card" style="margin-bottom: 1.5rem;">
         <div class="history-detail-grid">
             <div class="history-detail-item">
@@ -40,6 +48,84 @@
                 <span>Petugas TU</span>
                 <strong>{{ $pembayaran->user->nama }}</strong>
             </div>
+            <div class="history-detail-item">
+                <span>Status transaksi</span>
+                <strong>{{ $pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan' }}</strong>
+            </div>
+            <div class="history-detail-item">
+                <span>Alasan pembatalan</span>
+                <strong>{{ $pembayaran->alasan_pembatalan ?? '-' }}</strong>
+            </div>
+            @if ($pembayaran->status === 'dibatalkan')
+                <div class="history-detail-item">
+                    <span>Dibatalkan oleh</span>
+                    <strong>{{ $pembayaran->dibatalkanOleh->nama }}</strong>
+                </div>
+                <div class="history-detail-item">
+                    <span>Waktu pembatalan</span>
+                    <strong>{{ $pembayaran->dibatalkan_pada->format('d/m/Y H:i') }}</strong>
+                </div>
+            @endif
+        </div>
+    </section>
+
+    @if ($pembayaran->status !== 'dibatalkan')
+        <section class="data-card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <div>
+                    <h3>Batalkan Transaksi</h3>
+                    <p>Pembatalan mengembalikan seluruh tagihan transaksi menjadi belum bayar dan tidak menghapus histori.</p>
+                </div>
+            </div>
+            <form class="cancellation-form" method="POST" action="{{ route('riwayat-pembayaran.batalkan', $pembayaran) }}" data-confirm data-confirm-title="Batalkan transaksi?" data-confirm-message="Seluruh tagihan dalam transaksi ini akan kembali menjadi belum bayar." data-confirm-submit="Batalkan Transaksi" data-confirm-input-name="password" data-confirm-input-type="password" data-confirm-input-autocomplete="current-password" data-confirm-input-label="Password Anda">
+                @csrf
+                @method('PATCH')
+                <div class="form-field">
+                    <label for="alasan_pembatalan">Alasan Pembatalan <span aria-hidden="true">*</span></label>
+                    <textarea id="alasan_pembatalan" name="alasan_pembatalan" required maxlength="255" aria-describedby="alasan_pembatalan_bantuan">{{ old('alasan_pembatalan') }}</textarea>
+                    <span id="alasan_pembatalan_bantuan" class="reference-note">Jelaskan alasan pembatalan transaksi. Maksimal 255 karakter.</span>
+                    @error('alasan_pembatalan')
+                        <span class="error-message">{{ $message }}</span>
+                    @enderror
+                </div>
+                @error('password')
+                    <span class="error-message">{{ $message }}</span>
+                @enderror
+                <button class="button button-danger" type="submit">Batalkan Transaksi</button>
+            </form>
+        </section>
+    @endif
+
+    <section class="data-card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <div>
+                <h3>Arsip Foto Kwitansi</h3>
+                <p>Foto diunggah siswa sebagai arsip dan tidak mengubah status pembayaran.</p>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Diunggah</th>
+                        <th>Jenis File</th>
+                        <th>Ukuran</th>
+                        <th class="text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($pembayaran->arsipKwitansi as $arsip)
+                        <tr>
+                            <td class="text-mono">{{ $arsip->created_at->format('d/m/Y H:i') }}</td>
+                            <td>{{ $arsip->mime_type }}</td>
+                            <td>{{ number_format($arsip->ukuran_file / 1024, 1, ',', '.') }} KB</td>
+                            <td class="text-right"><a class="button button-secondary button-small" href="{{ route('arsip-kwitansi.show', $arsip) }}" target="_blank" rel="noopener">Lihat Foto</a></td>
+                        </tr>
+                    @empty
+                        <tr><td class="empty-state" colspan="4">Belum ada foto kwitansi yang diarsipkan untuk transaksi ini.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </section>
 

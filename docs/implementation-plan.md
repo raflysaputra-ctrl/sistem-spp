@@ -385,6 +385,14 @@ Detail transaksi:
 
 Filter final mengikuti kebutuhan PRD.
 
+### Pembatalan Transaksi
+
+- transaksi tidak dihapus, tetapi berstatus `dibatalkan`;
+- alasan, pengguna, dan waktu pembatalan dicatat;
+- pembatalan memakai password pengguna dan database transaction;
+- tagihan transaksi kembali `belum_bayar` agar dapat dibayar ulang;
+- detail transaksi tetap menjadi histori dan transaksi hanya dapat dibatalkan satu kali.
+
 ---
 
 ## Milestone 11 - Rekap Pembayaran
@@ -414,10 +422,7 @@ tanggal transaksi
 
 Siswa yang membayar SPP Juli pada Agustus tetap dapat muncul di rekap periode Juli.
 
-### TBD
-
-- export Excel;
-- export PDF.
+Tambahkan rentang `tanggal_mulai` dan `tanggal_selesai` berdasarkan `pembayaran.tanggal_bayar`, serta filter status transaksi `aktif`, `dibatalkan`, atau `semua`. Default laporan adalah transaksi aktif; export memakai filter yang sama.
 
 ---
 
@@ -485,6 +490,11 @@ Jangan membuat query dashboard kompleks sebelum kebutuhan final diputuskan.
 - filter periode;
 - filter kelas;
 - pembayaran terlambat tetap masuk periode yang benar.
+- pembatalan membutuhkan alasan dan password yang benar.
+- pembatalan rollback bila pemulihan tagihan gagal.
+- tagihan transaksi yang dibatalkan dapat dibayar kembali.
+- transaksi dibatalkan tidak dihitung sebagai penerimaan aktif.
+- filter periode SPP, tanggal transaksi, status, Excel, dan PDF konsisten.
 
 ---
 
@@ -519,6 +529,35 @@ Belum dilakukan sampai environment production diputuskan.
 - queue;
 - logging;
 - monitoring.
+
+---
+
+## Milestone 17 - Portal Wali dan Portal Siswa
+
+### Portal Wali
+
+- dapat diakses tanpa login dengan NIPD;
+- menampilkan nama siswa, kelas, dan tagihan yang sudah tersedia;
+- status lunas ditentukan dari detail pembayaran dengan transaksi `aktif`;
+- tidak menampilkan nominal, nomor kwitansi, foto, atau tautan login petugas.
+
+### Portal Siswa
+
+- akun dibuat dan password direset oleh Petugas TU, tanpa pendaftaran publik;
+- role siswa tidak dapat mengakses seluruh route Petugas TU;
+- siswa hanya melihat tagihan dan status SPP miliknya;
+- unggah JPEG/PNG maksimum 2 MB, kompres sebelum disimpan pada storage privat;
+- unggahan dapat tertaut ke satu transaksi aktif atau menjadi arsip tanpa transaksi;
+- unggahan tidak mengubah pembayaran, detail pembayaran, tagihan, atau tanggal lunas;
+- Petugas TU dapat membuka arsip melalui route yang diproteksi.
+
+### Test
+
+- pencarian NIPD dan empty state wali;
+- transaksi aktif, dibatalkan, dan pembayaran ulang pada status portal;
+- pemisahan akses role petugas/siswa;
+- pembuatan akun dan reset password siswa;
+- validasi unggahan, akses arsip privat, dan tidak berubahnya data pembayaran.
 
 ---
 

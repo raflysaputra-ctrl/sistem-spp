@@ -20,9 +20,7 @@ class RekapPembayaranController extends Controller
         $filters = $this->validatedFilters($request);
         $query = $this->filteredQuery($filters);
 
-        $totalNominal = (clone $query)->sum('nominal_bayar');
-        $jumlahTagihan = (clone $query)->count();
-        $jumlahTransaksi = (clone $query)->distinct()->count('id_pembayaran');
+        $ringkasan = $this->ringkasan($query);
 
         return view('rekap-pembayaran.index', [
             'filters' => $filters,
@@ -30,32 +28,41 @@ class RekapPembayaranController extends Controller
             'tahunTersedia' => TagihanSpp::query()->select('tahun')->distinct()->orderByDesc('tahun')->pluck('tahun'),
             'rekapPembayaran' => $this->orderedQuery($query)->paginate(20)
                 ->withQueryString(),
-            'totalNominal' => $totalNominal,
-            'jumlahTagihan' => $jumlahTagihan,
-            'jumlahTransaksi' => $jumlahTransaksi,
+            'ringkasan' => $ringkasan,
         ]);
     }
 
     public function exportExcel(Request $request): StreamedResponse
     {
-        $detailPembayaran = $this->orderedQuery($this->filteredQuery($this->validatedFilters($request)))->get();
+        $filters = $this->validatedFilters($request);
+        $detailPembayaran = $this->orderedQuery($this->filteredQuery($filters))->get();
 
         return response()->streamDownload(function () use ($detailPembayaran) {
             echo '<?xml version="1.0" encoding="UTF-8"?>';
             echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+            echo '<Styles>'
+                .'<Style ss:ID="border"><Borders>'
+                .'<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>'
+                .'<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>'
+                .'<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>'
+                .'<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>'
+                .'</Borders></Style>'
+                .'<Style ss:ID="header" ss:Parent="border"><Font ss:Bold="1"/></Style>'
+                .'</Styles>';
             echo '<Worksheet ss:Name="Rekap Pembayaran"><Table>';
             echo '<Row>'.$this->excelCell('Rekap Pembayaran SPP').'</Row>';
             echo '<Row>'.$this->excelCell('Bulan dan tahun berdasarkan periode SPP; tanggal transaksi ditampilkan terpisah.').'</Row>';
             echo '<Row></Row>';
             echo '<Row>'
-                .$this->excelCell('Tanggal Transaksi')
-                .$this->excelCell('No. Kwitansi')
-                .$this->excelCell('NIPD')
-                .$this->excelCell('Siswa')
-                .$this->excelCell('Kelas')
-                .$this->excelCell('Periode SPP')
-                .$this->excelCell('Nominal')
-                .$this->excelCell('Petugas TU')
+                .$this->excelCell('Tanggal Transaksi', 'String', 'header')
+                .$this->excelCell('No. Kwitansi', 'String', 'header')
+                .$this->excelCell('NIPD', 'String', 'header')
+                .$this->excelCell('Siswa', 'String', 'header')
+                .$this->excelCell('Kelas', 'String', 'header')
+                .$this->excelCell('Periode SPP', 'String', 'header')
+                .$this->excelCell('Nominal', 'String', 'header')
+                .$this->excelCell('Petugas TU', 'String', 'header')
+                .$this->excelCell('Status Transaksi', 'String', 'header')
                 .'</Row>';
 
             foreach ($detailPembayaran as $detail) {
@@ -63,14 +70,15 @@ class RekapPembayaranController extends Controller
                 $pembayaran = $detail->pembayaran;
 
                 echo '<Row>'
-                    .$this->excelCell($pembayaran->tanggal_bayar->format('d/m/Y H:i'))
-                    .$this->excelCell($pembayaran->no_kwitansi)
-                    .$this->excelCell($pembayaran->siswa->nipd)
-                    .$this->excelCell($pembayaran->siswa->nama_siswa)
-                    .$this->excelCell($tagihan->siswaKelas->kelas->nama_kelas)
-                    .$this->excelCell($this->periodeSpp($tagihan->bulan, $tagihan->tahun))
-                    .$this->excelCell((int) $detail->nominal_bayar, 'Number')
-                    .$this->excelCell($pembayaran->user->nama)
+                    .$this->excelCell($pembayaran->tanggal_bayar->format('d/m/Y H:i'), 'String', 'border')
+                    .$this->excelCell($pembayaran->no_kwitansi, 'String', 'border')
+                    .$this->excelCell($pembayaran->siswa->nipd, 'String', 'border')
+                    .$this->excelCell($pembayaran->siswa->nama_siswa, 'String', 'border')
+                    .$this->excelCell($tagihan->siswaKelas->kelas->nama_kelas, 'String', 'border')
+                    .$this->excelCell($this->periodeSpp($tagihan->bulan, $tagihan->tahun), 'String', 'border')
+                    .$this->excelCell((int) $detail->nominal_bayar, 'Number', 'border')
+                    .$this->excelCell($pembayaran->user->nama, 'String', 'border')
+                    .$this->excelCell($pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan', 'String', 'border')
                     .'</Row>';
             }
 
@@ -82,13 +90,13 @@ class RekapPembayaranController extends Controller
 
     public function exportPdf(Request $request): Response
     {
-        $detailPembayaran = $this->orderedQuery($this->filteredQuery($this->validatedFilters($request)))->get();
+        $filters = $this->validatedFilters($request);
+        $query = $this->filteredQuery($filters);
+        $detailPembayaran = $this->orderedQuery($query)->get();
 
         return Pdf::loadView('rekap-pembayaran.pdf', [
             'detailPembayaran' => $detailPembayaran,
-            'totalNominal' => $detailPembayaran->sum('nominal_bayar'),
-            'jumlahTagihan' => $detailPembayaran->count(),
-            'jumlahTransaksi' => $detailPembayaran->pluck('id_pembayaran')->unique()->count(),
+            'ringkasan' => $this->ringkasan($query),
         ])
             ->setPaper('a4', 'landscape')
             ->download('rekap-pembayaran-'.now()->format('Ymd-His').'.pdf');
@@ -99,14 +107,27 @@ class RekapPembayaranController extends Controller
      */
     private function validatedFilters(Request $request): array
     {
-        return $request->validate([
+        $filters = $request->validate([
             'bulan' => ['nullable', 'integer', 'between:1,12'],
             'tahun' => ['nullable', 'integer', 'between:1900,9999'],
             'id_jurusan' => ['nullable', 'integer', 'exists:jurusan,id_jurusan'],
             'tingkat' => ['nullable', 'integer', 'in:1,2,3'],
             'rombel' => ['nullable', 'integer', 'min:1', 'max:255'],
             'cari' => ['nullable', 'string', 'max:100'],
+            'tanggal_mulai' => ['nullable', 'date'],
+            'tanggal_selesai' => ['nullable', 'date', 'after_or_equal:tanggal_mulai'],
+            'status' => ['nullable', 'in:aktif,dibatalkan,semua'],
         ]);
+
+        foreach (['bulan', 'tahun', 'id_jurusan', 'tingkat', 'rombel'] as $filter) {
+            if (isset($filters[$filter])) {
+                $filters[$filter] = (int) $filters[$filter];
+            }
+        }
+
+        $filters['status'] = $filters['status'] ?? 'aktif';
+
+        return $filters;
     }
 
     /**
@@ -128,6 +149,18 @@ class RekapPembayaranController extends Controller
                 'tagihanSpp',
                 fn (Builder $query) => $query->where('tahun', $tahun),
             ))
+            ->when($filters['tanggal_mulai'] ?? null, fn (Builder $query, string $tanggal) => $query->whereHas(
+                'pembayaran',
+                fn (Builder $query) => $query->whereDate('tanggal_bayar', '>=', $tanggal),
+            ))
+            ->when($filters['tanggal_selesai'] ?? null, fn (Builder $query, string $tanggal) => $query->whereHas(
+                'pembayaran',
+                fn (Builder $query) => $query->whereDate('tanggal_bayar', '<=', $tanggal),
+            ))
+            ->when($filters['status'] !== 'semua', fn (Builder $query) => $query->whereHas(
+                'pembayaran',
+                fn (Builder $query) => $query->where('status', $filters['status']),
+            ))
             ->when($filters['cari'] ?? null, function (Builder $query, string $cari) {
                 $query->whereHas('pembayaran.siswa', function (Builder $query) use ($cari) {
                     $query->where('nipd', 'like', "%{$cari}%")
@@ -147,6 +180,22 @@ class RekapPembayaranController extends Controller
             );
     }
 
+    /**
+     * @return array{jumlah_transaksi_aktif: int, total_aktif: int|float|string, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int|float|string}
+     */
+    private function ringkasan(Builder $query): array
+    {
+        $aktif = (clone $query)->whereHas('pembayaran', fn (Builder $query) => $query->where('status', 'aktif'));
+        $dibatalkan = (clone $query)->whereHas('pembayaran', fn (Builder $query) => $query->where('status', 'dibatalkan'));
+
+        return [
+            'jumlah_transaksi_aktif' => (clone $aktif)->distinct()->count('id_pembayaran'),
+            'total_aktif' => (clone $aktif)->sum('nominal_bayar'),
+            'jumlah_transaksi_dibatalkan' => (clone $dibatalkan)->distinct()->count('id_pembayaran'),
+            'total_dibatalkan' => (clone $dibatalkan)->sum('nominal_bayar'),
+        ];
+    }
+
     private function orderedQuery(Builder $query): Builder
     {
         return $query->orderByDesc(
@@ -156,7 +205,7 @@ class RekapPembayaranController extends Controller
         );
     }
 
-    private function excelCell(string|int $value, string $type = 'String'): string
+    private function excelCell(string|int $value, string $type = 'String', ?string $style = null): string
     {
         $value = (string) $value;
 
@@ -164,7 +213,9 @@ class RekapPembayaranController extends Controller
             $value = "'{$value}";
         }
 
-        return '<Cell><Data ss:Type="'.$type.'">'.htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8').'</Data></Cell>';
+        $styleAttribute = $style === null ? '' : ' ss:StyleID="'.$style.'"';
+
+        return '<Cell'.$styleAttribute.'><Data ss:Type="'.$type.'">'.htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8').'</Data></Cell>';
     }
 
     private function periodeSpp(int $bulan, int $tahun): string

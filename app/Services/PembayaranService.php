@@ -50,7 +50,10 @@ class PembayaranService
                 ]);
             }
 
-            if (DetailPembayaran::query()->whereIn('id_tagihan', $idTagihanUnik)->exists()) {
+            if (DetailPembayaran::query()
+                ->whereIn('id_tagihan', $idTagihanUnik)
+                ->whereHas('pembayaran', fn ($query) => $query->where('status', 'aktif'))
+                ->exists()) {
                 throw ValidationException::withMessages([
                     'id_tagihan' => 'Tagihan yang dipilih sudah tercatat dalam transaksi pembayaran.',
                 ]);
@@ -87,6 +90,7 @@ class PembayaranService
                 'id_user' => $user->id_user,
                 'tanggal_bayar' => $tanggalBayar,
                 'total_bayar' => $tagihanSpp->sum(fn (TagihanSpp $tagihan) => (int) $tagihan->nominal),
+                'status' => 'aktif',
             ]);
 
             $pembayaran->detailPembayaran()->createMany(

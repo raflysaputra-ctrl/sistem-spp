@@ -113,6 +113,7 @@ class PembayaranController extends Controller
         $pembayaran->load([
             'siswa',
             'user',
+            'dibatalkanOleh',
             'detailPembayaran.tagihanSpp.siswaKelas.kelas.jurusan',
         ]);
 

@@ -9,7 +9,7 @@
         p { margin: 4px 0 0; color: #444653; }
         .header { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #191c1e; }
         .summary { width: 100%; margin-bottom: 16px; border-collapse: separate; border-spacing: 8px 0; }
-        .summary td { width: 33.33%; padding: 10px; border-left: 4px solid #00288e; background: #f2f4f6; }
+        .summary td { width: 25%; padding: 10px; border-left: 4px solid #00288e; background: #f2f4f6; }
         .summary td:nth-child(2) { border-left-color: #087443; }
         .summary td:nth-child(3) { border-left-color: #505f76; }
         .summary span { display: block; color: #505f76; font-size: 8px; font-weight: bold; text-transform: uppercase; }
@@ -32,13 +32,14 @@
         <p>Dicetak pada {{ now()->format('d/m/Y H:i') }}</p>
     </header>
 
-    <p class="note">Bulan dan tahun dalam rekap mengacu pada periode SPP. Tanggal transaksi ditampilkan terpisah.</p>
+    <p class="note">Periode SPP mengacu pada bulan dan tahun tagihan. Tanggal Transaksi mengacu pada waktu pembayaran diterima.</p>
 
     <table class="summary">
         <tr>
-            <td><span>Total Nominal</span><strong>Rp {{ number_format($totalNominal, 0, ',', '.') }}</strong></td>
-            <td><span>Periode Dibayar</span><strong>{{ $jumlahTagihan }}</strong></td>
-            <td><span>Transaksi</span><strong>{{ $jumlahTransaksi }}</strong></td>
+            <td><span>Total Penerimaan Aktif</span><strong>Rp {{ number_format($ringkasan['total_aktif'], 0, ',', '.') }}</strong></td>
+            <td><span>Transaksi Aktif</span><strong>{{ $ringkasan['jumlah_transaksi_aktif'] }}</strong></td>
+            <td><span>Total Dibatalkan</span><strong>Rp {{ number_format($ringkasan['total_dibatalkan'], 0, ',', '.') }}</strong></td>
+            <td><span>Transaksi Dibatalkan</span><strong>{{ $ringkasan['jumlah_transaksi_dibatalkan'] }}</strong></td>
         </tr>
     </table>
 
@@ -52,6 +53,7 @@
                 <th>Periode SPP</th>
                 <th class="right">Nominal</th>
                 <th>Petugas TU</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
@@ -64,10 +66,11 @@
                     <td>{{ $namaBulan[$detail->tagihanSpp->bulan] }} {{ $detail->tagihanSpp->tahun }}</td>
                     <td class="right">Rp {{ number_format($detail->nominal_bayar, 0, ',', '.') }}</td>
                     <td>{{ $detail->pembayaran->user->nama }}</td>
+                    <td>{{ $detail->pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
+                    <td colspan="8">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
                 </tr>
             @endforelse
         </tbody>

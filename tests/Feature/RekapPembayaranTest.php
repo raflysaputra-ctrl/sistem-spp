@@ -11,6 +11,7 @@ use App\Models\TagihanSpp;
 use App\Models\TahunAjaran;
 use App\Models\TarifSpp;
 use App\Models\User;
+use App\Services\PembatalanPembayaranService;
 use App\Services\PembayaranService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -38,6 +39,8 @@ class RekapPembayaranTest extends TestCase
                 'tingkat' => 2,
                 'rombel' => 5,
                 'cari' => $siswa->nipd,
+                'tanggal_mulai' => '2037-08-01',
+                'tanggal_selesai' => '2037-08-31',
             ]))
             ->assertOk()
             ->assertSee($pembayaran->no_kwitansi)
@@ -45,7 +48,9 @@ class RekapPembayaranTest extends TestCase
             ->assertDontSee('Agustus 2037')
             ->assertSee('15/08/2037 09:30')
             ->assertSee('Rp 150.000')
-            ->assertSee('Bulan dan tahun selalu mengacu pada periode SPP.');
+            ->assertSee('Periode SPP mengacu pada bulan dan tahun tagihan.')
+            ->assertSee('Tanggal Transaksi: Mulai')
+            ->assertSee('Tanggal Transaksi: Selesai');
     }
 
     public function test_recap_searches_students_by_name_or_nis(): void
@@ -67,7 +72,13 @@ class RekapPembayaranTest extends TestCase
     public function test_petugas_can_export_filtered_recap_to_excel_and_pdf(): void
     {
         [$user, $pembayaran] = $this->buatPembayaranDuaPeriode();
-        $filters = ['bulan' => 7, 'tahun' => 2037];
+        $filters = [
+            'bulan' => 7,
+            'tahun' => 2037,
+            'tanggal_mulai' => '2037-08-15',
+            'tanggal_selesai' => '2037-08-15',
+            'status' => 'aktif',
+        ];
 
         $excel = $this->actingAs($user)->get(route('rekap-pembayaran.export.excel', $filters));
 
@@ -77,6 +88,8 @@ class RekapPembayaranTest extends TestCase
         $this->assertStringContainsString('Juli 2037', $excel->streamedContent());
         $this->assertStringContainsString($pembayaran->no_kwitansi, $excel->streamedContent());
         $this->assertStringNotContainsString('Agustus 2037', $excel->streamedContent());
+        $this->assertStringContainsString('ss:StyleID="border"', $excel->streamedContent());
+        $this->assertStringContainsString('ss:StyleID="header"', $excel->streamedContent());
 
         $pdf = $this->actingAs($user)->get(route('rekap-pembayaran.export.pdf', $filters));
 
@@ -96,6 +109,36 @@ class RekapPembayaranTest extends TestCase
         ]));
 
         $this->assertStringContainsString("'=HYPERLINK(&quot;https://example.test&quot;)", $excel->streamedContent());
+    }
+
+    public function test_recap_defaults_to_active_and_can_show_cancelled_transactions(): void
+    {
+        [$user, $pembayaran] = $this->buatPembayaranDuaPeriode();
+        app(PembatalanPembayaranService::class)->batalkan($user, $pembayaran, 'Salah input.');
+
+        $this->actingAs($user)
+            ->get(route('rekap-pembayaran.index'))
+            ->assertOk()
+            ->assertDontSee($pembayaran->no_kwitansi)
+            ->assertSeeText('Total Penerimaan Aktif');
+
+        $this->get(route('rekap-pembayaran.index', ['status' => 'dibatalkan']))
+            ->assertOk()
+            ->assertSee($pembayaran->no_kwitansi)
+            ->assertSeeText('Dibatalkan')
+            ->assertSeeText('Transaksi Dibatalkan');
+
+        $this->get(route('rekap-pembayaran.index', [
+            'bulan' => 7,
+            'tahun' => 2037,
+            'tanggal_mulai' => '2037-08-15',
+            'tanggal_selesai' => '2037-08-15',
+            'status' => 'dibatalkan',
+        ]))
+            ->assertOk()
+            ->assertSee($pembayaran->no_kwitansi)
+            ->assertSee('Juli 2037')
+            ->assertDontSee('Agustus 2037');
     }
 
     /**

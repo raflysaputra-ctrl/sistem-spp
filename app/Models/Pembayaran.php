@@ -19,6 +19,10 @@ class Pembayaran extends Model
         'tanggal_bayar',
         'total_bayar',
         'keterangan',
+        'status',
+        'alasan_pembatalan',
+        'dibatalkan_oleh',
+        'dibatalkan_pada',
     ];
 
     protected function casts(): array
@@ -26,6 +30,7 @@ class Pembayaran extends Model
         return [
             'tanggal_bayar' => 'datetime',
             'total_bayar' => 'decimal:0',
+            'dibatalkan_pada' => 'datetime',
         ];
     }
 
@@ -42,5 +47,15 @@ class Pembayaran extends Model
     public function detailPembayaran(): HasMany
     {
         return $this->hasMany(DetailPembayaran::class, 'id_pembayaran', 'id_pembayaran');
+    }
+
+    public function dibatalkanOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dibatalkan_oleh', 'id_user');
+    }
+
+    public function arsipKwitansi(): HasMany
+    {
+        return $this->hasMany(ArsipKwitansiSiswa::class, 'id_pembayaran', 'id_pembayaran');
     }
 }

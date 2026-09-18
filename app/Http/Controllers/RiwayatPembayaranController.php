@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PembatalanPembayaranRequest;
 use App\Models\Pembayaran;
+use App\Models\User;
+use App\Services\PembatalanPembayaranService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RiwayatPembayaranController extends Controller
@@ -22,7 +28,7 @@ class RiwayatPembayaranController extends Controller
                 ->with(['siswa', 'user', 'detailPembayaran.tagihanSpp'])
                 ->when($filters['cari'] ?? null, function (Builder $query, string $cari) {
                     $query->where(function (Builder $query) use ($cari) {
-                            $query->where('no_kwitansi', 'like', "%{$cari}%")
+                        $query->where('no_kwitansi', 'like', "%{$cari}%")
                             ->orWhereHas('siswa', function (Builder $query) use ($cari) {
                                 $query->withTrashed()
                                     ->where('nipd', 'like', "%{$cari}%")
@@ -44,11 +50,41 @@ class RiwayatPembayaranController extends Controller
         $pembayaran->load([
             'siswa',
             'user',
+            'dibatalkanOleh',
             'detailPembayaran.tagihanSpp.siswaKelas.kelas',
+            'arsipKwitansi',
         ]);
 
         return view('riwayat-pembayaran.show', [
             'pembayaran' => $pembayaran,
         ]);
+    }
+
+    public function batalkan(
+        PembatalanPembayaranRequest $request,
+        Pembayaran $pembayaran,
+        PembatalanPembayaranService $pembatalanPembayaranService,
+    ): RedirectResponse {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $pembatalanPembayaranService->batalkan(
+                $user,
+                $pembayaran,
+                $request->validated('alasan_pembatalan'),
+            );
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        } catch (QueryException) {
+            return back()->withErrors([
+                'pembayaran' => 'Pembatalan tidak dapat diproses karena data transaksi baru saja berubah. Muat ulang halaman dan coba lagi.',
+            ]);
+        }
+
+        return to_route('riwayat-pembayaran.show', $pembayaran)->with(
+            'status',
+            'Transaksi pembayaran berhasil dibatalkan.',
+        );
     }
 }

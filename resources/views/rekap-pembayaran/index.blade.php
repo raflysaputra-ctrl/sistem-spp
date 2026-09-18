@@ -11,7 +11,7 @@
     <div class="page-header">
         <div>
             <h2>Rekap Pembayaran</h2>
-            <p>Rekap per periode SPP untuk memantau pembayaran berdasarkan siswa dan kelas.</p>
+            <p>Rekap periode SPP dan tanggal transaksi pembayaran berdasarkan siswa dan kelas.</p>
         </div>
         <div class="action-stack">
             <a class="button button-secondary" href="{{ route('rekap-pembayaran.export.excel', $filters) }}">Export Excel</a>
@@ -22,7 +22,7 @@
     <section class="data-card" style="margin-bottom: 1.5rem;">
         <form class="filter-bar" method="GET" action="{{ route('rekap-pembayaran.index') }}">
             <div class="filter-field">
-                <label for="bulan">Bulan Periode SPP</label>
+                <label for="bulan">Periode SPP: Bulan</label>
                 <select id="bulan" name="bulan">
                     <option value="">Semua Bulan</option>
                     @foreach ($namaBulan as $nomorBulan => $bulan)
@@ -31,12 +31,28 @@
                 </select>
             </div>
             <div class="filter-field">
-                <label for="tahun">Tahun Periode SPP</label>
+                <label for="tahun">Periode SPP: Tahun</label>
                 <select id="tahun" name="tahun">
                     <option value="">Semua Tahun</option>
                     @foreach ($tahunTersedia as $tahun)
                         <option value="{{ $tahun }}" @selected(($filters['tahun'] ?? null) === $tahun)>{{ $tahun }}</option>
                     @endforeach
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="tanggal_mulai">Tanggal Transaksi: Mulai</label>
+                <input id="tanggal_mulai" name="tanggal_mulai" type="date" value="{{ $filters['tanggal_mulai'] ?? '' }}">
+            </div>
+            <div class="filter-field">
+                <label for="tanggal_selesai">Tanggal Transaksi: Selesai</label>
+                <input id="tanggal_selesai" name="tanggal_selesai" type="date" value="{{ $filters['tanggal_selesai'] ?? '' }}">
+            </div>
+            <div class="filter-field">
+                <label for="status">Status Transaksi</label>
+                <select id="status" name="status">
+                    <option value="aktif" @selected(($filters['status'] ?? 'aktif') === 'aktif')>Aktif</option>
+                    <option value="dibatalkan" @selected(($filters['status'] ?? '') === 'dibatalkan')>Dibatalkan</option>
+                    <option value="semua" @selected(($filters['status'] ?? '') === 'semua')>Semua</option>
                 </select>
             </div>
             <div class="filter-field">
@@ -70,21 +86,25 @@
                 <a class="button button-secondary" href="{{ route('rekap-pembayaran.index') }}">Reset</a>
             @endif
         </form>
-        <p class="filter-note">Bulan dan tahun selalu mengacu pada periode SPP. Tanggal transaksi ditampilkan terpisah pada tabel rekap.</p>
+        <p class="filter-note">Periode SPP mengacu pada bulan dan tahun tagihan. Tanggal Transaksi mengacu pada waktu pembayaran diterima.</p>
     </section>
 
     <section class="report-summary" aria-label="Ringkasan rekap pembayaran">
         <div class="report-summary-item">
-            <span>Total Nominal</span>
-            <strong class="text-mono">Rp {{ number_format($totalNominal, 0, ',', '.') }}</strong>
+            <span>Total Penerimaan Aktif</span>
+            <strong class="text-mono">Rp {{ number_format($ringkasan['total_aktif'], 0, ',', '.') }}</strong>
         </div>
         <div class="report-summary-item">
-            <span>Periode Dibayar</span>
-            <strong>{{ $jumlahTagihan }}</strong>
+            <span>Transaksi Aktif</span>
+            <strong>{{ $ringkasan['jumlah_transaksi_aktif'] }}</strong>
         </div>
         <div class="report-summary-item">
-            <span>Transaksi</span>
-            <strong>{{ $jumlahTransaksi }}</strong>
+            <span>Total Dibatalkan</span>
+            <strong class="text-mono">Rp {{ number_format($ringkasan['total_dibatalkan'], 0, ',', '.') }}</strong>
+        </div>
+        <div class="report-summary-item">
+            <span>Transaksi Dibatalkan</span>
+            <strong>{{ $ringkasan['jumlah_transaksi_dibatalkan'] }}</strong>
         </div>
     </section>
 
@@ -107,6 +127,7 @@
                         <th>Periode SPP</th>
                         <th class="text-right">Nominal</th>
                         <th>Petugas TU</th>
+                        <th>Status</th>
                         <th class="text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -123,13 +144,14 @@
                             <td>{{ $namaBulan[$detail->tagihanSpp->bulan] }} {{ $detail->tagihanSpp->tahun }}</td>
                             <td class="text-mono text-right"><strong>Rp {{ number_format($detail->nominal_bayar, 0, ',', '.') }}</strong></td>
                             <td>{{ $detail->pembayaran->user->nama }}</td>
+                            <td>{{ $detail->pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan' }}</td>
                             <td class="text-right">
                                 <a class="button button-secondary button-small" href="{{ route('riwayat-pembayaran.show', $detail->pembayaran) }}">Detail</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td class="empty-state" colspan="8">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
+                            <td class="empty-state" colspan="9">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
                         </tr>
                     @endforelse
                 </tbody>

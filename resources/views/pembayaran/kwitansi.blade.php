@@ -28,6 +28,9 @@
         @endif
 
         <article class="receipt-paper">
+            @if ($pembayaran->status === 'dibatalkan')
+                <div class="error-message"><strong>TRANSAKSI DIBATALKAN</strong><br>Alasan: {{ $pembayaran->alasan_pembatalan }}</div>
+            @endif
             <header class="receipt-school">
                 <img class="receipt-school-logo" src="{{ asset('images/cbi.png') }}" alt="Logo SMK Informatika CBI">
                 <div>

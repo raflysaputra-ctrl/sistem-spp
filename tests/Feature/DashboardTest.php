@@ -81,4 +81,48 @@ class DashboardTest extends TestCase
             Carbon::setTestNow();
         }
     }
+
+    public function test_dashboard_excludes_cancelled_transactions_from_active_income(): void
+    {
+        Carbon::setTestNow('2026-09-04 10:00:00');
+
+        try {
+            $user = User::factory()->create();
+            $siswa = Siswa::query()->create([
+                'nipd' => '20260002',
+                'nama_siswa' => 'Siswa Dashboard Batal',
+                'jenis_kelamin' => 'P',
+                'angkatan' => 2026,
+                'status_siswa' => 'aktif',
+            ]);
+            Pembayaran::query()->create([
+                'no_kwitansi' => 'KWT-AKTIF-001',
+                'id_siswa' => $siswa->id_siswa,
+                'id_user' => $user->id_user,
+                'tanggal_bayar' => now(),
+                'total_bayar' => 150000,
+                'status' => 'aktif',
+            ]);
+            Pembayaran::query()->create([
+                'no_kwitansi' => 'KWT-BATAL-001',
+                'id_siswa' => $siswa->id_siswa,
+                'id_user' => $user->id_user,
+                'tanggal_bayar' => now(),
+                'total_bayar' => 500000,
+                'status' => 'dibatalkan',
+                'alasan_pembatalan' => 'Salah input.',
+                'dibatalkan_oleh' => $user->id_user,
+                'dibatalkan_pada' => now(),
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('home'))
+                ->assertOk()
+                ->assertViewHas('jumlahTransaksiHariIni', 1)
+                ->assertViewHas('totalPenerimaanBulanIni', 150000)
+                ->assertDontSee('KWT-BATAL-001');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
 }

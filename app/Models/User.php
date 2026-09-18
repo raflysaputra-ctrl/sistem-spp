@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,6 +22,8 @@ class User extends Authenticatable
         'nama',
         'username',
         'password',
+        'role',
+        'id_siswa',
     ];
 
     protected $hidden = [
@@ -38,5 +41,15 @@ class User extends Authenticatable
     public function pembayaran(): HasMany
     {
         return $this->hasMany(Pembayaran::class, 'id_user', 'id_user');
+    }
+
+    public function siswa(): BelongsTo
+    {
+        return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function pembatalanPembayaran(): HasMany
+    {
+        return $this->hasMany(Pembayaran::class, 'dibatalkan_oleh', 'id_user');
     }
 }

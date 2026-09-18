@@ -164,8 +164,7 @@ Belum termasuk:
 - payment gateway;
 - QRIS;
 - pembayaran online;
-- akun siswa;
-- akun orang tua;
+- akun orang tua selain portal wali tanpa login;
 - aplikasi mobile;
 - WhatsApp notification;
 - SMS;
@@ -467,6 +466,12 @@ Transaksi pembayaran harus atomic.
 ### BR-18
 Jika proses pembayaran gagal di tengah, seluruh perubahan harus rollback.
 
+### BR-19
+Pembayaran dapat dibatalkan satu kali oleh pengguna yang sudah login dengan alasan dan password yang benar. Pembatalan tidak menghapus histori pembayaran maupun detail pembayaran, tetapi mengembalikan seluruh tagihan transaksi menjadi `belum_bayar`.
+
+### BR-20
+Penerimaan aktif, dashboard, dan total rekap tidak menghitung transaksi berstatus `dibatalkan`.
+
 ---
 
 ## 23. Kebutuhan Fungsional
@@ -502,6 +507,19 @@ Jika proses pembayaran gagal di tengah, seluruh perubahan harus rollback.
 ---
 
 ## 24. Kebutuhan Nonfungsional
+
+### Portal Wali dan Siswa
+
+- Portal wali dapat diakses tanpa login menggunakan NIPD siswa.
+- Portal wali hanya menampilkan nama, kelas, periode tagihan yang tersedia, status pembayaran, dan tanggal bayar dari transaksi aktif.
+- Portal wali tidak menampilkan nominal, nomor kwitansi, foto, atau tautan login petugas.
+- Akun siswa dibuat dan passwordnya direset oleh Petugas TU; tidak ada pendaftaran publik.
+- Login Petugas TU dan siswa memakai guard session terpisah agar dapat aktif bersamaan pada browser yang sama; logout hanya mengakhiri guard yang sesuai.
+- Siswa hanya dapat melihat status SPP miliknya dan mengunggah foto kwitansi fisik miliknya.
+- Foto kwitansi menjadi arsip, dapat ditautkan ke satu transaksi pembayaran aktif yang mencakup beberapa periode, atau disimpan tanpa transaksi.
+- Unggahan foto tidak mengubah status tagihan, pembayaran, detail pembayaran, atau tanggal lunas.
+- Foto hanya boleh diakses Petugas TU dari arsip privat; tidak boleh tersedia melalui URL publik.
+- Foto hanya menerima JPEG atau PNG, maksimal 2 MB per unggahan, dan dikompresi sebelum disimpan.
 
 ### Security
 
@@ -575,5 +593,4 @@ MVP dianggap memenuhi kebutuhan apabila:
 12. Export rekap.
 13. Hosting production.
 14. Backup database.
-15. Koreksi/pembatalan transaksi.
-16. Audit trail.
+15. Audit trail tambahan.

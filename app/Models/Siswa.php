@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Siswa extends Model
@@ -42,5 +43,15 @@ class Siswa extends Model
     public function pembayaran(): HasMany
     {
         return $this->hasMany(Pembayaran::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function akunSiswa(): HasOne
+    {
+        return $this->hasOne(User::class, 'id_siswa', 'id_siswa')->where('role', 'siswa');
+    }
+
+    public function arsipKwitansi(): HasMany
+    {
+        return $this->hasMany(ArsipKwitansiSiswa::class, 'id_siswa', 'id_siswa');
     }
 }

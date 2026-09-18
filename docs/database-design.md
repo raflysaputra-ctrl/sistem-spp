@@ -37,6 +37,7 @@ Migration Laravel menjadi sumber utama schema database.
 8. `tagihan_spp`
 9. `pembayaran`
 10. `detail_pembayaran`
+11. `arsip_kwitansi_siswa`
 
 Tabel framework Laravel seperti `migrations`, `cache`, `jobs`, dan lainnya dapat tetap ada.
 
@@ -308,6 +309,10 @@ Kolom:
 | tanggal_bayar | DATETIME | wajib |
 | total_bayar | DECIMAL(12,0) UNSIGNED | > 0 |
 | keterangan | VARCHAR(255) | nullable |
+| status | ENUM('aktif','dibatalkan') | default aktif |
+| alasan_pembatalan | VARCHAR(255) | nullable |
+| dibatalkan_oleh | BIGINT UNSIGNED | nullable, FK ke users |
+| dibatalkan_pada | DATETIME | nullable |
 | created_at | TIMESTAMP | nullable |
 | updated_at | TIMESTAMP | nullable |
 
@@ -316,6 +321,7 @@ Foreign key:
 ```text
 pembayaran.id_siswa -> siswa.id_siswa
 pembayaran.id_user -> users.id_user
+pembayaran.dibatalkan_oleh -> users.id_user
 ```
 
 Satu `pembayaran` mewakili satu transaksi/kwitansi.
@@ -332,7 +338,7 @@ Kolom:
 |---|---|---|
 | id_detail_pembayaran | BIGINT UNSIGNED | PK |
 | id_pembayaran | BIGINT UNSIGNED | FK |
-| id_tagihan | BIGINT UNSIGNED | FK, UNIQUE |
+| id_tagihan | BIGINT UNSIGNED | FK, indexed |
 | nominal_bayar | DECIMAL(12,0) UNSIGNED | > 0 |
 | created_at | TIMESTAMP | nullable |
 | updated_at | TIMESTAMP | nullable |
@@ -340,7 +346,7 @@ Kolom:
 Constraint:
 
 ```text
-UNIQUE(id_tagihan)
+INDEX(id_tagihan)
 ```
 
 Foreign key:
@@ -350,7 +356,7 @@ detail_pembayaran.id_pembayaran -> pembayaran.id_pembayaran
 detail_pembayaran.id_tagihan -> tagihan_spp.id_tagihan
 ```
 
-Constraint `UNIQUE(id_tagihan)` mencegah satu tagihan dilunasi dalam lebih dari satu transaksi.
+Riwayat detail pembayaran dipertahankan ketika transaksi dibatalkan. Pencegahan pembayaran ganda aktif dilakukan oleh status tagihan, locking, dan pemeriksaan detail yang hanya berasal dari pembayaran berstatus `aktif`.
 
 ---
 
@@ -360,6 +366,7 @@ Constraint `UNIQUE(id_tagihan)` mencegah satu tagihan dilunasi dalam lebih dari 
 
 ```text
 User hasMany Pembayaran
+User belongsTo Siswa sebagai akun siswa bila role = siswa
 ```
 
 ### Jurusan
@@ -388,6 +395,8 @@ Kelas hasMany SiswaKelas
 Siswa hasMany SiswaKelas
 Siswa hasMany TagihanSpp
 Siswa hasMany Pembayaran
+Siswa hasOne User sebagai akun siswa
+Siswa hasMany ArsipKwitansiSiswa
 ```
 
 ### SiswaKelas
@@ -412,7 +421,7 @@ TarifSpp hasMany TagihanSpp
 TagihanSpp belongsTo Siswa
 TagihanSpp belongsTo SiswaKelas
 TagihanSpp belongsTo TarifSpp
-TagihanSpp hasOne DetailPembayaran
+TagihanSpp hasMany DetailPembayaran
 ```
 
 ### Pembayaran
@@ -421,6 +430,7 @@ TagihanSpp hasOne DetailPembayaran
 Pembayaran belongsTo Siswa
 Pembayaran belongsTo User
 Pembayaran hasMany DetailPembayaran
+Pembayaran hasMany ArsipKwitansiSiswa
 ```
 
 ### DetailPembayaran
@@ -430,9 +440,46 @@ DetailPembayaran belongsTo Pembayaran
 DetailPembayaran belongsTo TagihanSpp
 ```
 
+### ArsipKwitansiSiswa
+
+```text
+ArsipKwitansiSiswa belongsTo Siswa
+ArsipKwitansiSiswa belongsTo Pembayaran (nullable)
+```
+
 ---
 
-## 14. Diagram Relasi Sederhana
+## 14. Ekstensi Portal Wali dan Siswa
+
+### users
+
+Kolom tambahan:
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| role | ENUM('petugas','siswa') | default petugas |
+| id_siswa | BIGINT UNSIGNED | nullable, UNIQUE, FK ke siswa untuk akun siswa |
+
+### arsip_kwitansi_siswa
+
+Primary key: `id_arsip_kwitansi`
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id_arsip_kwitansi | BIGINT UNSIGNED | PK |
+| id_siswa | BIGINT UNSIGNED | FK |
+| id_pembayaran | BIGINT UNSIGNED | nullable, FK |
+| path | VARCHAR(255) | path pada storage privat, UNIQUE |
+| mime_type | VARCHAR(50) | JPEG atau PNG setelah kompresi |
+| ukuran_file | INT UNSIGNED | ukuran hasil kompresi dalam byte |
+| created_at | TIMESTAMP | waktu unggah |
+| updated_at | TIMESTAMP | nullable |
+
+Foto disimpan pada disk `local` Laravel yang berakar di `storage/app/private`. Tidak ada URL publik; file hanya disajikan oleh route yang diproteksi role Petugas TU.
+
+---
+
+## 15. Diagram Relasi Sederhana
 
 ```text
 jurusan
@@ -454,7 +501,7 @@ jurusan
 
 ---
 
-## 15. Aturan Integritas
+## 16. Aturan Integritas
 
 ### Siswa
 
@@ -495,12 +542,12 @@ no_kwitansi UNIQUE
 ### Detail Pembayaran
 
 ```text
-id_tagihan UNIQUE
+id_tagihan INDEX
 ```
 
 ---
 
-## 16. Database Transaction Pembayaran
+## 17. Database Transaction Pembayaran
 
 Proses pembayaran wajib menggunakan `DB::transaction()`.
 
@@ -527,7 +574,7 @@ Tidak boleh ada transaksi parsial.
 
 ---
 
-## 17. Index yang Relevan
+## 18. Index yang Relevan
 
 Index dibutuhkan untuk:
 
@@ -543,7 +590,7 @@ Tujuannya mendukung pencarian siswa dan rekap.
 
 ---
 
-## 18. Seeder Awal
+## 19. Seeder Awal
 
 Seeder menyediakan:
 
@@ -575,7 +622,7 @@ Seeder menyediakan:
 
 ---
 
-## 19. Model Naming
+## 20. Model Naming
 
 Model yang digunakan:
 
@@ -590,6 +637,7 @@ TarifSpp
 TagihanSpp
 Pembayaran
 DetailPembayaran
+ArsipKwitansiSiswa
 ```
 
 Karena primary key bukan `id`, setiap model harus mendefinisikan `$primaryKey`.
@@ -604,12 +652,11 @@ Nama tabel juga sebaiknya ditentukan eksplisit untuk menghindari masalah plurali
 
 ---
 
-## 20. TBD Database
+## 21. TBD Database
 
 Belum diputuskan:
 
 - audit transaksi;
-- void/pembatalan pembayaran;
 - histori perubahan transaksi;
 - metode backup production;
 

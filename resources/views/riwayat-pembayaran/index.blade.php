@@ -49,6 +49,7 @@
                         <th>Tanggal Pembayaran</th>
                         <th>Siswa</th>
                         <th>Periode Dibayar</th>
+                        <th>Status</th>
                         <th class="text-right">Total</th>
                         <th>Petugas TU</th>
                         <th class="text-right">Aksi</th>
@@ -70,6 +71,11 @@
                                 <span class="text-muted text-mono">{{ $pembayaran->siswa->nipd }}</span>
                             </td>
                             <td>{{ $periode }}</td>
+                            <td>
+                                <span class="status-badge {{ $pembayaran->status === 'aktif' ? 'status-lunas' : 'status-tunggakan' }}">
+                                    {{ $pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan' }}
+                                </span>
+                            </td>
                             <td class="text-mono text-right"><strong>Rp {{ number_format($pembayaran->total_bayar, 0, ',', '.') }}</strong></td>
                             <td>{{ $pembayaran->user->nama }}</td>
                             <td class="text-right">
@@ -78,7 +84,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td class="empty-state" colspan="7">Belum ada transaksi pembayaran yang tercatat.</td>
+                            <td class="empty-state" colspan="8">Belum ada transaksi pembayaran yang tercatat.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TagihanSpp extends Model
 {
@@ -48,9 +48,9 @@ class TagihanSpp extends Model
         return $this->belongsTo(TarifSpp::class, 'id_tarif', 'id_tarif');
     }
 
-    public function detailPembayaran(): HasOne
+    public function detailPembayaran(): HasMany
     {
-        return $this->hasOne(DetailPembayaran::class, 'id_tagihan', 'id_tagihan');
+        return $this->hasMany(DetailPembayaran::class, 'id_tagihan', 'id_tagihan');
     }
 
     public function adalahTunggakan(): bool

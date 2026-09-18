@@ -192,8 +192,8 @@
         .status-warning { background: #ffe08a; color: #6a4300; }
         .status-lunas { background: #dff7ed; color: #087443; }
         .status-belum-bayar { background: #ffdad6; color: #93000a; }
-        .status-tunggakan { background: #ffe08a; color: #6a4300; }
-        .filter-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #c4c5d5; background: #fff; }
+         .status-tunggakan { background: #ffe08a; color: #6a4300; }
+         .filter-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #c4c5d5; background: #fff; }
         .filter-field { display: grid; gap: .4rem; min-width: 10rem; }
         .filter-field label, .form-field label { color: #444653; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
         .filter-field input, .filter-field select, .form-field input, .form-field select { min-height: 2.5rem; width: 100%; padding: .55rem .65rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; color: #191c1e; font: inherit; font-size: .9rem; }
@@ -201,8 +201,14 @@
         .empty-state { padding: 2rem 1.25rem; color: #505f76; text-align: center; }
         .form-card { max-width: 48rem; padding: 1.5rem; }
         .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-        .form-field { display: grid; gap: .4rem; }
-        .form-field.full-width { grid-column: 1 / -1; }
+         .form-field { display: grid; gap: .4rem; }
+         .form-field textarea { min-height: 7rem; width: 100%; padding: .7rem .75rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; color: #191c1e; font: inherit; font-size: .9rem; line-height: 1.5; resize: vertical; }
+         .form-field textarea:focus { outline: 0; border-color: #00288e; box-shadow: 0 0 0 2px rgb(0 40 142 / 18%); }
+         .cancellation-form { display: grid; gap: 1rem; padding: 1.25rem; background: #fffaf9; }
+         .cancellation-form .form-field { max-width: 46rem; }
+         .cancellation-form .form-field label span { color: #ba1a1a; }
+         .cancellation-form .button-danger { justify-self: start; }
+         .form-field.full-width { grid-column: 1 / -1; }
         .field-error { margin: 0; color: #ba1a1a; font-size: .78rem; }
         .checkbox-field { display: flex; align-items: center; gap: .55rem; margin-top: 1rem; color: #444653; font-size: .86rem; }
         .checkbox-field input { width: 1rem; height: 1rem; accent-color: #00288e; }
@@ -382,6 +388,7 @@
                     <p class="navigation-heading">Pembayaran</p>
                     <a class="nav-link {{ request()->routeIs('pembayaran.*') ? 'active' : '' }}" href="{{ route('pembayaran.index') }}">Transaksi Pembayaran</a>
                     <a class="nav-link {{ request()->routeIs('riwayat-pembayaran.*') ? 'active' : '' }}" href="{{ route('riwayat-pembayaran.index') }}">Riwayat Pembayaran</a>
+                    <a class="nav-link {{ request()->routeIs('arsip-kwitansi.*') ? 'active' : '' }}" href="{{ route('arsip-kwitansi.index') }}">Arsip Kwitansi Siswa</a>
                 </div>
 
                 <div class="navigation-group">

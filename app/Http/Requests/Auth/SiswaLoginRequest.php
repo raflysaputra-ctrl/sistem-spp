@@ -8,16 +8,13 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class LoginRequest extends FormRequest
+class SiswaLoginRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * @return array<string, list<string>>
-     */
     public function rules(): array
     {
         return [
@@ -26,30 +23,25 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'username.required' => 'Username wajib diisi.',
-            'username.string' => 'Username tidak valid.',
-            'username.max' => 'Username maksimal 50 karakter.',
-            'password.required' => 'Password wajib diisi.',
-            'password.string' => 'Password tidak valid.',
-            'password.max' => 'Password maksimal 255 karakter.',
-        ];
-    }
-
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::guard('web')->attempt([...$this->only('username', 'password'), 'role' => 'petugas'])) {
+        $guard = Auth::guard('siswa');
+
+        if (! $guard->attempt([...$this->only('username', 'password'), 'role' => 'siswa'])) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'username' => 'Username atau password tidak sesuai.',
+            ]);
+        }
+
+        if (! $guard->user()->siswa || $guard->user()->siswa->status_siswa !== 'aktif') {
+            $guard->logout();
+
+            throw ValidationException::withMessages([
+                'username' => 'Akun siswa tidak dapat digunakan.',
             ]);
         }
 
@@ -69,6 +61,6 @@ class LoginRequest extends FormRequest
 
     private function throttleKey(): string
     {
-        return Str::transliterate(Str::lower((string) $this->input('username')).'|'.$this->ip());
+        return Str::transliterate('siswa|'.Str::lower((string) $this->input('username')).'|'.$this->ip());
     }
 }

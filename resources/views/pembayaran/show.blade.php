@@ -38,7 +38,7 @@
         </div>
     </section>
 
-    <form class="payment-layout" method="POST" action="{{ route('pembayaran.store', $siswa) }}" data-confirm data-confirm-title="Proses pembayaran?" data-confirm-message="Tagihan yang dipilih akan dicatat sebagai lunas dan pembayaran tidak dapat dibatalkan dari halaman ini." data-confirm-submit="Proses Pembayaran">
+    <form class="payment-layout" method="POST" action="{{ route('pembayaran.store', $siswa) }}" data-confirm data-confirm-title="Proses pembayaran?" data-confirm-message="Tagihan yang dipilih akan dicatat sebagai lunas. Jika perlu, transaksi dapat dibatalkan dari detail riwayat dengan alasan dan password petugas." data-confirm-submit="Proses Pembayaran">
         @csrf
 
         <section class="data-card">

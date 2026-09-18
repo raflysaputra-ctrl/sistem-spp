@@ -13,6 +13,7 @@ class DashboardController extends Controller
         $sekarang = now();
         $awalGrafik = $sekarang->copy()->subMonths(5)->startOfMonth();
         $penerimaanPerBulan = Pembayaran::query()
+            ->where('status', 'aktif')
             ->whereBetween('tanggal_bayar', [$awalGrafik, $sekarang])
             ->get(['tanggal_bayar', 'total_bayar'])
             ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->tanggal_bayar->format('Y-m'))
@@ -41,14 +42,19 @@ class DashboardController extends Controller
 
         return view('home', [
             'jumlahSiswaAktif' => Siswa::query()->where('status_siswa', 'aktif')->count(),
-            'jumlahTransaksiHariIni' => Pembayaran::query()->whereDate('tanggal_bayar', $sekarang->toDateString())->count(),
+            'jumlahTransaksiHariIni' => Pembayaran::query()
+                ->where('status', 'aktif')
+                ->whereDate('tanggal_bayar', $sekarang->toDateString())
+                ->count(),
             'totalPenerimaanBulanIni' => Pembayaran::query()
+                ->where('status', 'aktif')
                 ->whereBetween('tanggal_bayar', [$sekarang->copy()->startOfMonth(), $sekarang->copy()->endOfMonth()])
                 ->sum('total_bayar'),
             'grafikPenerimaan' => $grafikPenerimaan,
             'dataGrafikPenerimaan' => $dataGrafikPenerimaan,
             'totalPenerimaanEnamBulan' => array_sum(array_column($grafikPenerimaan, 'total')),
             'transaksiTerbaru' => Pembayaran::query()
+                ->where('status', 'aktif')
                 ->with(['siswa', 'user', 'detailPembayaran.tagihanSpp.siswaKelas.kelas'])
                 ->orderByDesc('tanggal_bayar')
                 ->limit(5)

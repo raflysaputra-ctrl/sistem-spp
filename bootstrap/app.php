@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUserRole;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,7 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'role' => EnsureUserRole::class,
+        ]);
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('siswa/*') ? route('siswa.login') : route('login'));
+        $middleware->redirectUsersTo(fn (Request $request) => $request->is('siswa/*') ? route('siswa.status') : route('home'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (QueryException $exception, Request $request) {
