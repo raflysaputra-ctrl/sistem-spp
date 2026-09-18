@@ -132,6 +132,17 @@ return [
         Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
     ),
 
+    'cookies' => [
+        'web' => env(
+            'SESSION_COOKIE',
+            Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
+        ),
+        'siswa' => env(
+            'SISWA_SESSION_COOKIE',
+            Str::slug(env('APP_NAME', 'laravel'), '_').'_siswa_session'
+        ),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Session Cookie Path
