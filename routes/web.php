@@ -101,5 +101,6 @@ Route::middleware(['auth:web', 'role:petugas,web'])->group(function () {
 Route::middleware(['auth:siswa', 'role:siswa,siswa'])->prefix('siswa')->name('siswa.')->group(function () {
     Route::get('/status-spp', [SiswaPortalController::class, 'status'])->name('status');
     Route::post('/kwitansi', [SiswaPortalController::class, 'simpanFoto'])->name('kwitansi.store');
+    Route::patch('/kwitansi', [SiswaPortalController::class, 'gantiFoto'])->name('kwitansi.update');
     Route::post('/logout', [SiswaAuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

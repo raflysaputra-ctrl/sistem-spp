@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pembayaran extends Model
 {
@@ -54,8 +55,8 @@ class Pembayaran extends Model
         return $this->belongsTo(User::class, 'dibatalkan_oleh', 'id_user');
     }
 
-    public function arsipKwitansi(): HasMany
+    public function arsipKwitansi(): HasOne
     {
-        return $this->hasMany(ArsipKwitansiSiswa::class, 'id_pembayaran', 'id_pembayaran');
+        return $this->hasOne(ArsipKwitansiSiswa::class, 'id_pembayaran', 'id_pembayaran');
     }
 }

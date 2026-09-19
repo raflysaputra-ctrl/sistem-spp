@@ -430,7 +430,7 @@ TagihanSpp hasMany DetailPembayaran
 Pembayaran belongsTo Siswa
 Pembayaran belongsTo User
 Pembayaran hasMany DetailPembayaran
-Pembayaran hasMany ArsipKwitansiSiswa
+Pembayaran hasOne ArsipKwitansiSiswa
 ```
 
 ### DetailPembayaran
@@ -444,7 +444,7 @@ DetailPembayaran belongsTo TagihanSpp
 
 ```text
 ArsipKwitansiSiswa belongsTo Siswa
-ArsipKwitansiSiswa belongsTo Pembayaran (nullable)
+ArsipKwitansiSiswa belongsTo Pembayaran (nullable hanya untuk arsip lama)
 ```
 
 ---
@@ -468,14 +468,14 @@ Primary key: `id_arsip_kwitansi`
 |---|---|---|
 | id_arsip_kwitansi | BIGINT UNSIGNED | PK |
 | id_siswa | BIGINT UNSIGNED | FK |
-| id_pembayaran | BIGINT UNSIGNED | nullable, FK |
+| id_pembayaran | BIGINT UNSIGNED | nullable untuk arsip lama, FK, UNIQUE |
 | path | VARCHAR(255) | path pada storage privat, UNIQUE |
 | mime_type | VARCHAR(50) | JPEG atau PNG setelah kompresi |
 | ukuran_file | INT UNSIGNED | ukuran hasil kompresi dalam byte |
 | created_at | TIMESTAMP | waktu unggah |
 | updated_at | TIMESTAMP | nullable |
 
-Foto disimpan pada disk `local` Laravel yang berakar di `storage/app/private`. Tidak ada URL publik; file hanya disajikan oleh route yang diproteksi role Petugas TU.
+Foto disimpan pada disk `local` Laravel yang berakar di `storage/app/private`. Tidak ada URL publik; file hanya disajikan oleh route yang diproteksi role Petugas TU. Unggahan baru wajib terhubung ke transaksi aktif milik siswa, sedangkan nilai null tetap didukung untuk arsip lama.
 
 ---
 

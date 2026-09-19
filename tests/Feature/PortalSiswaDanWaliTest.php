@@ -156,7 +156,7 @@ class PortalSiswaDanWaliTest extends TestCase
         $this->get('/storage/'.$arsip->path)->assertForbidden();
     }
 
-    public function test_student_can_store_an_unlinked_receipt_but_cannot_link_another_students_payment(): void
+    public function test_student_cannot_upload_without_a_payment_or_to_another_students_payment(): void
     {
         Storage::fake('local');
         [$siswa] = $this->buatSiswaDanTagihan();
@@ -180,12 +180,184 @@ class PortalSiswaDanWaliTest extends TestCase
             ->assertRedirect(route('siswa.status'))
             ->assertSessionHasErrors('id_pembayaran');
 
-        $this->post(route('siswa.kwitansi.store'), [
-            'foto' => UploadedFile::fake()->image('kwitansi.png', 300, 300),
-        ])->assertRedirect(route('siswa.status'));
+        $this->from(route('siswa.status'))
+            ->post(route('siswa.kwitansi.store'), [
+                'foto' => UploadedFile::fake()->image('kwitansi.png', 300, 300),
+            ])
+            ->assertRedirect(route('siswa.status'))
+            ->assertSessionHasErrors('id_pembayaran');
+
+        $this->patch(route('siswa.kwitansi.update'), [
+            'id_pembayaran' => $pembayaranLain->id_pembayaran,
+            'foto' => UploadedFile::fake()->image('pengganti.png', 300, 300),
+        ])->assertSessionHasErrors('id_pembayaran');
+
+        $this->assertDatabaseCount('arsip_kwitansi_siswa', 0);
+    }
+
+    public function test_student_cannot_upload_or_replace_a_photo_for_a_cancelled_payment(): void
+    {
+        Storage::fake('local');
+        [$siswa, , $petugas] = $this->buatSiswaDanTagihan();
+        $pembayaran = Pembayaran::create([
+            'no_kwitansi' => 'BATAL-UNGGAH',
+            'id_siswa' => $siswa->id_siswa,
+            'id_user' => $petugas->id_user,
+            'tanggal_bayar' => '2044-07-20 09:15:00',
+            'total_bayar' => 150000,
+            'status' => 'dibatalkan',
+        ]);
+        $arsip = ArsipKwitansiSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_pembayaran' => $pembayaran->id_pembayaran,
+            'path' => 'kwitansi-siswa/riwayat/batal.jpg',
+            'mime_type' => 'image/jpeg',
+            'ukuran_file' => 1024,
+        ]);
+        Storage::disk('local')->put($arsip->path, 'foto-lama');
+
+        $this->actingAs($this->buatAkunSiswa($siswa), 'siswa')
+            ->from(route('siswa.status'))
+            ->post(route('siswa.kwitansi.store'), [
+                'id_pembayaran' => $pembayaran->id_pembayaran,
+                'foto' => UploadedFile::fake()->image('kwitansi.png', 300, 300),
+            ])
+            ->assertRedirect(route('siswa.status'))
+            ->assertSessionHasErrors('id_pembayaran');
+
+        $this->patch(route('siswa.kwitansi.update'), [
+            'id_pembayaran' => $pembayaran->id_pembayaran,
+            'foto' => UploadedFile::fake()->image('pengganti.png', 300, 300),
+        ])->assertSessionHasErrors('id_pembayaran');
+
+        $this->assertSame($arsip->path, $arsip->fresh()->path);
+        Storage::disk('local')->assertExists($arsip->path);
+    }
+
+    public function test_one_payment_cannot_have_two_receipt_photos(): void
+    {
+        Storage::fake('local');
+        [$siswa, $tagihan, $petugas] = $this->buatSiswaDanTagihan();
+        $pembayaran = $this->buatPembayaran($siswa, $petugas, [$tagihan], 'SATU-FOTO');
+        $akunSiswa = $this->buatAkunSiswa($siswa);
+
+        $this->actingAs($akunSiswa, 'siswa')
+            ->post(route('siswa.kwitansi.store'), [
+                'id_pembayaran' => $pembayaran->id_pembayaran,
+                'foto' => UploadedFile::fake()->image('pertama.jpg', 300, 300),
+            ])
+            ->assertRedirect(route('siswa.status'));
+
+        $this->from(route('siswa.status'))
+            ->post(route('siswa.kwitansi.store'), [
+                'id_pembayaran' => $pembayaran->id_pembayaran,
+                'foto' => UploadedFile::fake()->image('kedua.jpg', 300, 300),
+            ])
+            ->assertRedirect(route('siswa.status'))
+            ->assertSessionHasErrors('id_pembayaran');
+
+        $this->assertSame(1, ArsipKwitansiSiswa::query()->where('id_pembayaran', $pembayaran->id_pembayaran)->count());
+    }
+
+    public function test_student_can_replace_a_receipt_photo_without_creating_another_archive(): void
+    {
+        Storage::fake('local');
+        [$siswa, $tagihan, $petugas] = $this->buatSiswaDanTagihan();
+        $tagihan->update(['status' => 'lunas', 'tanggal_lunas' => '2044-07-20 09:15:00']);
+        $pembayaran = $this->buatPembayaran($siswa, $petugas, [$tagihan], 'GANTI-FOTO');
+        $akunSiswa = $this->buatAkunSiswa($siswa);
+
+        $this->actingAs($akunSiswa, 'siswa')
+            ->post(route('siswa.kwitansi.store'), [
+                'id_pembayaran' => $pembayaran->id_pembayaran,
+                'foto' => UploadedFile::fake()->image('lama.jpg', 300, 300),
+            ]);
+
+        $arsip = ArsipKwitansiSiswa::query()->firstOrFail();
+        $pathLama = $arsip->path;
+        $tanggalLunas = $tagihan->fresh()->tanggal_lunas->toDateTimeString();
+
+        $this->get(route('siswa.status'))
+            ->assertOk()
+            ->assertSeeText('Ganti foto kwitansi');
+
+        $this->patch(route('siswa.kwitansi.update'), [
+            'id_pembayaran' => $pembayaran->id_pembayaran,
+            'foto' => UploadedFile::fake()->image('baru.png', 400, 400),
+        ])->assertRedirect(route('siswa.status'))
+            ->assertSessionHas('status', 'Foto kwitansi berhasil diganti.');
+
+        $arsip->refresh();
+        $this->assertNotSame($pathLama, $arsip->path);
+        $this->assertSame('image/png', $arsip->mime_type);
+        $this->assertSame(1, ArsipKwitansiSiswa::query()->where('id_pembayaran', $pembayaran->id_pembayaran)->count());
+        Storage::disk('local')->assertMissing($pathLama);
+        Storage::disk('local')->assertExists($arsip->path);
+        $this->assertSame('aktif', $pembayaran->fresh()->status);
+        $this->assertSame('lunas', $tagihan->fresh()->status);
+        $this->assertSame($tanggalLunas, $tagihan->fresh()->tanggal_lunas->toDateTimeString());
+    }
+
+    public function test_multi_month_payment_marks_every_period_card_as_having_a_receipt_photo(): void
+    {
+        [$siswa, $tagihanJuli, $petugas] = $this->buatSiswaDanTagihan();
+        $tagihanAgustus = TagihanSpp::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_siswa_kelas' => $tagihanJuli->id_siswa_kelas,
+            'id_tarif' => $tagihanJuli->id_tarif,
+            'bulan' => 8,
+            'tahun' => 2044,
+            'nominal' => 150000,
+            'status' => 'lunas',
+            'tanggal_lunas' => '2044-07-20 09:15:00',
+        ]);
+        $pembayaran = $this->buatPembayaran($siswa, $petugas, [$tagihanJuli, $tagihanAgustus], 'MULTI-BULAN');
+
+        $this->actingAs($this->buatAkunSiswa($siswa), 'siswa')
+            ->get(route('siswa.status'))
+            ->assertOk()
+            ->assertSeeText(['MULTI-BULAN', '20/07/2044', 'Juli 2044, Agustus 2044']);
+
+        ArsipKwitansiSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_pembayaran' => $pembayaran->id_pembayaran,
+            'path' => 'kwitansi-siswa/riwayat/multi.jpg',
+            'mime_type' => 'image/jpeg',
+            'ukuran_file' => 1024,
+        ]);
+
+        $response = $this
+            ->get(route('siswa.status'))
+            ->assertOk()
+            ->assertSeeText(['Juli 2044', 'Agustus 2044', 'Ganti foto kwitansi'])
+            ->assertDontSeeText('Unggah foto kwitansi');
+
+        $this->assertSame(2, substr_count($response->getContent(), 'Foto kwitansi sudah diunggah'));
+    }
+
+    public function test_legacy_unlinked_archive_remains_available_and_does_not_enable_unlinked_uploads(): void
+    {
+        [$siswa, , $petugas] = $this->buatSiswaDanTagihan();
+        $arsip = ArsipKwitansiSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_pembayaran' => null,
+            'path' => 'kwitansi-siswa/riwayat/legacy.jpg',
+            'mime_type' => 'image/jpeg',
+            'ukuran_file' => 1024,
+        ]);
+
+        $this->actingAs($this->buatAkunSiswa($siswa), 'siswa')
+            ->get(route('siswa.status'))
+            ->assertOk()
+            ->assertSeeText('Belum ada transaksi pembayaran yang dapat dihubungkan dengan foto kwitansi.');
+
+        $this->actingAs($petugas, 'web')
+            ->get(route('arsip-kwitansi.index'))
+            ->assertOk()
+            ->assertSeeText('Tidak ditautkan');
 
         $this->assertDatabaseHas('arsip_kwitansi_siswa', [
-            'id_siswa' => $siswa->id_siswa,
+            'id_arsip_kwitansi' => $arsip->id_arsip_kwitansi,
             'id_pembayaran' => null,
         ]);
     }
@@ -248,5 +420,30 @@ class PortalSiswaDanWaliTest extends TestCase
             'role' => 'siswa',
             'id_siswa' => $siswa->id_siswa,
         ]);
+    }
+
+    /**
+     * @param  array<int, TagihanSpp>  $tagihanSpp
+     */
+    private function buatPembayaran(Siswa $siswa, User $petugas, array $tagihanSpp, string $nomorKwitansi): Pembayaran
+    {
+        $pembayaran = Pembayaran::create([
+            'no_kwitansi' => $nomorKwitansi,
+            'id_siswa' => $siswa->id_siswa,
+            'id_user' => $petugas->id_user,
+            'tanggal_bayar' => '2044-07-20 09:15:00',
+            'total_bayar' => count($tagihanSpp) * 150000,
+            'status' => 'aktif',
+        ]);
+
+        foreach ($tagihanSpp as $tagihan) {
+            DetailPembayaran::create([
+                'id_pembayaran' => $pembayaran->id_pembayaran,
+                'id_tagihan' => $tagihan->id_tagihan,
+                'nominal_bayar' => 150000,
+            ]);
+        }
+
+        return $pembayaran;
     }
 }

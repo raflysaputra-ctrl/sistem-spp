@@ -547,7 +547,7 @@ Belum dilakukan sampai environment production diputuskan.
 - role siswa tidak dapat mengakses seluruh route Petugas TU;
 - siswa hanya melihat tagihan dan status SPP miliknya;
 - unggah JPEG/PNG maksimum 2 MB, kompres sebelum disimpan pada storage privat;
-- unggahan dapat tertaut ke satu transaksi aktif atau menjadi arsip tanpa transaksi;
+- unggahan baru wajib tertaut ke satu transaksi aktif milik siswa dan satu transaksi hanya memiliki satu foto yang dapat diganti; arsip lama tanpa transaksi tetap dipertahankan;
 - unggahan tidak mengubah pembayaran, detail pembayaran, tagihan, atau tanggal lunas;
 - Petugas TU dapat membuka arsip melalui route yang diproteksi.
 

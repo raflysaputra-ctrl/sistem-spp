@@ -516,7 +516,7 @@ Penerimaan aktif, dashboard, dan total rekap tidak menghitung transaksi berstatu
 - Akun siswa dibuat dan passwordnya direset oleh Petugas TU; tidak ada pendaftaran publik.
 - Login Petugas TU dan siswa memakai guard session terpisah agar dapat aktif bersamaan pada browser yang sama; logout hanya mengakhiri guard yang sesuai.
 - Siswa hanya dapat melihat status SPP miliknya dan mengunggah foto kwitansi fisik miliknya.
-- Foto kwitansi menjadi arsip, dapat ditautkan ke satu transaksi pembayaran aktif yang mencakup beberapa periode, atau disimpan tanpa transaksi.
+- Setiap unggahan baru foto kwitansi wajib ditautkan ke satu transaksi pembayaran aktif milik siswa dan satu transaksi hanya memiliki satu foto; siswa dapat mengganti foto pada transaksi aktif tersebut, sedangkan arsip lama tanpa transaksi tetap dipertahankan.
 - Unggahan foto tidak mengubah status tagihan, pembayaran, detail pembayaran, atau tanggal lunas.
 - Foto hanya boleh diakses Petugas TU dari arsip privat; tidak boleh tersedia melalui URL publik.
 - Foto hanya menerima JPEG atau PNG, maksimal 2 MB per unggahan, dan dikompresi sebelum disimpan.

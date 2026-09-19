@@ -114,16 +114,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($pembayaran->arsipKwitansi as $arsip)
+                    @if ($arsip = $pembayaran->arsipKwitansi)
                         <tr>
                             <td class="text-mono">{{ $arsip->created_at->format('d/m/Y H:i') }}</td>
                             <td>{{ $arsip->mime_type }}</td>
                             <td>{{ number_format($arsip->ukuran_file / 1024, 1, ',', '.') }} KB</td>
                             <td class="text-right"><a class="button button-secondary button-small" href="{{ route('arsip-kwitansi.show', $arsip) }}" target="_blank" rel="noopener">Lihat Foto</a></td>
                         </tr>
-                    @empty
+                    @else
                         <tr><td class="empty-state" colspan="4">Belum ada foto kwitansi yang diarsipkan untuk transaksi ini.</td></tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>
