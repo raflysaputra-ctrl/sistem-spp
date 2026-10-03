@@ -20,7 +20,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_petugas_can_create_jurusan_with_default_classes_and_update_it(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)->post(route('master.jurusan.store'), [
             'kode_jurusan' => 'CRJ',
@@ -56,7 +56,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_jurusan_deletion_is_rejected_when_referenced_by_kelas(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $jurusan = Jurusan::create(['kode_jurusan' => 'JRF', 'nama_jurusan' => 'Jurusan Referensi']);
         Kelas::create([
             'id_jurusan' => $jurusan->id_jurusan,
@@ -74,7 +74,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_petugas_can_create_kelas_with_flexible_rombel_and_duplicate_combination_is_rejected(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $jurusan = Jurusan::create(['kode_jurusan' => 'KLS', 'nama_jurusan' => 'Kelas Test']);
 
         $this->actingAs($user)->post(route('master.kelas.store'), [
@@ -118,7 +118,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_kelas_deletion_is_rejected_when_referenced_by_siswa_kelas(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $jurusan = Jurusan::create(['kode_jurusan' => 'KRF', 'nama_jurusan' => 'Kelas Referensi']);
         $kelas = Kelas::create([
             'id_jurusan' => $jurusan->id_jurusan,
@@ -149,7 +149,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_tahun_ajaran_deletion_is_rejected_when_it_has_tarif(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $tahunAjaran = $this->createTahunAjaran('2092/2093');
         TarifSpp::create([
             'id_tahun_ajaran' => $tahunAjaran->id_tahun_ajaran,
@@ -166,7 +166,7 @@ class MasterDataCrudTest extends TestCase
 
     public function test_petugas_can_create_all_tarif_and_update_but_cannot_update_referenced_tarif(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $tahunAjaran = $this->createTahunAjaran('2093/2094');
 
         $this->actingAs($user)->get(route('master.tarif-spp.create'))

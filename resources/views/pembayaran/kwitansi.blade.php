@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kwitansi '.$pembayaran->no_kwitansi.' | Sistem Pembayaran SPP')
+@section('title', 'Kwitansi '.$pembayaran->no_kwitansi.' | Sistem Informasi Keuangan')
 @section('page-title', 'Preview Kwitansi')
 
 @section('content')

@@ -95,7 +95,7 @@ class TahunAjaranController extends Controller
     {
         if (! Hash::check($request->validated('password'), $request->user()->password)) {
             return to_route('master.tahun-ajaran.index')
-                ->with('error', 'Password petugas tidak sesuai. Tahun ajaran tidak diaktifkan.');
+                ->with('error', 'Password Admin tidak sesuai. Tahun ajaran tidak diaktifkan.');
         }
 
         if ($tahunAjaran->isTutup()) {

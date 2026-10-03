@@ -28,8 +28,24 @@ class UserFactory extends Factory
             'nama' => fake()->name(),
             'username' => fake()->unique()->userName(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => 'petugas',
+            'role' => User::ROLE_TU,
+            'is_active' => true,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => User::ROLE_ADMIN]);
+    }
+
+    public function tu(): static
+    {
+        return $this->state(fn () => ['role' => User::ROLE_TU]);
+    }
+
+    public function kepalaSekolah(): static
+    {
+        return $this->state(fn () => ['role' => User::ROLE_KEPALA_SEKOLAH]);
     }
 }

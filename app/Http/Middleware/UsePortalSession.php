@@ -6,6 +6,7 @@ use App\Session\PortalSessionManager;
 use Closure;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class UsePortalSession
@@ -17,9 +18,13 @@ class UsePortalSession
 
     public function handle(Request $request, Closure $next): Response
     {
-        $context = $request->is('siswa', 'siswa/*') ? 'siswa' : 'web';
+        $portal = $request->segment(1);
+        $context = $portal === 'siswa' ? 'siswa' : 'web';
 
-        $this->selectContext($context);
+        if ($context === 'siswa') {
+            $this->selectContext($context);
+            Auth::shouldUse($context);
+        }
 
         return $next($request);
     }

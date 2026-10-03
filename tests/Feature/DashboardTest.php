@@ -19,13 +19,14 @@ class DashboardTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_petugas_can_view_operational_dashboard_and_quick_actions(): void
+    public function test_tu_can_view_operational_dashboard_and_quick_actions(): void
     {
-        $user = User::factory()->create(['nama' => 'Petugas Dashboard']);
+        $user = User::factory()->tu()->create(['nama' => 'Petugas Dashboard']);
 
         $this->actingAs($user)
             ->get(route('home'))
             ->assertOk()
+            ->assertViewIs('dashboard.tu')
             ->assertSeeText([
                 'Selamat datang, Petugas Dashboard.',
                 'Siswa Aktif',
@@ -42,12 +43,52 @@ class DashboardTest extends TestCase
             ->assertSee(route('rekap-pembayaran.index'), false);
     }
 
+    public function test_admin_sees_control_dashboard_without_tu_transaction_actions(): void
+    {
+        $admin = User::factory()->admin()->create(['nama' => 'Admin Keuangan']);
+
+        $this->actingAs($admin)
+            ->get(route('home'))
+            ->assertOk()
+            ->assertViewIs('dashboard.admin')
+            ->assertSeeText([
+                'Dashboard Admin',
+                'Selamat datang, Admin Keuangan.',
+                'Kontrol Sistem',
+                'Kelola Data Siswa',
+                'Tinjau Pembatalan Transaksi',
+                'Lihat Rekap Pembayaran',
+            ])
+            ->assertDontSee('href="'.route('pembayaran.index').'"', false)
+            ->assertDontSee('href="'.route('status-spp.index').'"', false);
+    }
+
+    public function test_kepala_sekolah_sees_read_only_available_financial_data(): void
+    {
+        $kepalaSekolah = User::factory()->kepalaSekolah()->create(['nama' => 'Kepala Sekolah']);
+
+        $this->actingAs($kepalaSekolah)
+            ->get(route('home'))
+            ->assertOk()
+            ->assertViewIs('dashboard.kepala-sekolah')
+            ->assertSeeText([
+                'Dashboard Keuangan',
+                'Monitoring penerimaan sekolah',
+                'Penerimaan Bulan Ini',
+                'Penerimaan 6 Bulan',
+                'Data Pengeluaran dan selisih keuangan belum ditampilkan',
+            ])
+            ->assertSee('href="'.route('rekap-pembayaran.index').'"', false)
+            ->assertDontSee('href="'.route('pembayaran.index').'"', false)
+            ->assertDontSee('href="'.route('riwayat-pembayaran.index').'"', false);
+    }
+
     public function test_dashboard_displays_six_month_financial_chart_by_transaction_date(): void
     {
         Carbon::setTestNow('2026-09-04 10:00:00');
 
         try {
-            $user = User::factory()->create();
+            $user = User::factory()->tu()->create();
             $siswa = Siswa::query()->create([
                 'nipd' => '20260001',
                 'nama_siswa' => 'Siswa Grafik',
@@ -87,7 +128,7 @@ class DashboardTest extends TestCase
         Carbon::setTestNow('2026-09-04 10:00:00');
 
         try {
-            $user = User::factory()->create();
+            $user = User::factory()->tu()->create();
             $siswa = Siswa::query()->create([
                 'nipd' => '20260002',
                 'nama_siswa' => 'Siswa Dashboard Batal',

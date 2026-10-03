@@ -25,9 +25,10 @@ class PembatalanPembayaranTest extends TestCase
 
     public function test_cancellation_requires_reason_and_correct_password(): void
     {
-        [$user, $pembayaran] = $this->buatPembayaran();
+        [, $pembayaran] = $this->buatPembayaran();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($user)
+        $this->actingAs($admin)
             ->from(route('riwayat-pembayaran.show', $pembayaran))
             ->patch(route('riwayat-pembayaran.batalkan', $pembayaran), [])
             ->assertRedirect(route('riwayat-pembayaran.show', $pembayaran))
@@ -43,10 +44,11 @@ class PembatalanPembayaranTest extends TestCase
 
     public function test_cancellation_preserves_history_restores_bills_and_allows_repayment(): void
     {
-        [$user, $pembayaran, $siswa, $tagihan] = $this->buatPembayaran();
+        [$tu, $pembayaran, $siswa, $tagihan] = $this->buatPembayaran();
+        $admin = User::factory()->admin()->create();
         $jumlahDetailSebelum = DetailPembayaran::query()->where('id_pembayaran', $pembayaran->id_pembayaran)->count();
 
-        $this->actingAs($user)
+        $this->actingAs($admin)
             ->patch(route('riwayat-pembayaran.batalkan', $pembayaran), [
                 'alasan_pembatalan' => 'Nominal perlu dikoreksi.',
                 'password' => 'password',
@@ -57,7 +59,7 @@ class PembatalanPembayaranTest extends TestCase
             'id_pembayaran' => $pembayaran->id_pembayaran,
             'status' => 'dibatalkan',
             'alasan_pembatalan' => 'Nominal perlu dikoreksi.',
-            'dibatalkan_oleh' => $user->id_user,
+            'dibatalkan_oleh' => $admin->id_user,
         ]);
         $this->assertSame($jumlahDetailSebelum, DetailPembayaran::query()->where('id_pembayaran', $pembayaran->id_pembayaran)->count());
         $this->assertSame(1, Pembayaran::query()->whereKey($pembayaran->id_pembayaran)->count());
@@ -67,7 +69,9 @@ class PembatalanPembayaranTest extends TestCase
             $this->assertNull($item->fresh()->tanggal_lunas);
         }
 
-        $pembayaranBaru = app(PembayaranService::class)->bayar($user, $siswa, $tagihan->pluck('id_tagihan')->all());
+        $this->assertSame($tu->id_user, $pembayaran->fresh()->id_user);
+
+        $pembayaranBaru = app(PembayaranService::class)->bayar($tu, $siswa, $tagihan->pluck('id_tagihan')->all());
 
         $this->assertSame('aktif', $pembayaranBaru->status);
         $this->assertSame(2, DetailPembayaran::query()->where('id_tagihan', $tagihan->first()->id_tagihan)->count());
@@ -79,11 +83,12 @@ class PembatalanPembayaranTest extends TestCase
 
     public function test_transaction_cannot_be_cancelled_twice(): void
     {
-        [$user, $pembayaran] = $this->buatPembayaran();
+        [, $pembayaran] = $this->buatPembayaran();
+        $admin = User::factory()->admin()->create();
 
-        app(PembatalanPembayaranService::class)->batalkan($user, $pembayaran, 'Salah transaksi.');
+        app(PembatalanPembayaranService::class)->batalkan($admin, $pembayaran, 'Salah transaksi.');
 
-        $this->actingAs($user)
+        $this->actingAs($admin)
             ->from(route('riwayat-pembayaran.show', $pembayaran))
             ->patch(route('riwayat-pembayaran.batalkan', $pembayaran), [
                 'alasan_pembatalan' => 'Coba lagi.',
@@ -95,11 +100,12 @@ class PembatalanPembayaranTest extends TestCase
 
     public function test_cancellation_rolls_back_when_restoring_a_bill_fails(): void
     {
-        [$user, $pembayaran, , $tagihan] = $this->buatPembayaran();
+        [, $pembayaran, , $tagihan] = $this->buatPembayaran();
+        $admin = User::factory()->admin()->create();
         TagihanSpp::updating(fn () => throw new RuntimeException('Simulasi kegagalan pemulihan tagihan.'));
 
         try {
-            app(PembatalanPembayaranService::class)->batalkan($user, $pembayaran, 'Salah transaksi.');
+            app(PembatalanPembayaranService::class)->batalkan($admin, $pembayaran, 'Salah transaksi.');
             $this->fail('Pembatalan seharusnya gagal.');
         } catch (RuntimeException $exception) {
             $this->assertSame('Simulasi kegagalan pemulihan tagihan.', $exception->getMessage());
@@ -111,6 +117,24 @@ class PembatalanPembayaranTest extends TestCase
         $this->assertNull($pembayaran->fresh()->dibatalkan_pada);
         $this->assertSame('lunas', $tagihan->first()->fresh()->status);
         $this->assertNotNull($tagihan->first()->fresh()->tanggal_lunas);
+    }
+
+    public function test_tu_and_kepala_sekolah_cannot_cancel_a_transaction(): void
+    {
+        [$tu, $pembayaran] = $this->buatPembayaran();
+        $kepalaSekolah = User::factory()->kepalaSekolah()->create();
+
+        foreach ([$tu, $kepalaSekolah] as $user) {
+            $this->actingAs($user)
+                ->patch(route('riwayat-pembayaran.batalkan', $pembayaran), [
+                    'alasan_pembatalan' => 'Tidak berwenang.',
+                    'password' => 'password',
+                ])
+                ->assertForbidden();
+        }
+
+        $this->assertSame('aktif', $pembayaran->fresh()->status);
+        $this->assertNull($pembayaran->fresh()->dibatalkan_oleh);
     }
 
     /**

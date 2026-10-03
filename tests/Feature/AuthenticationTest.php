@@ -12,20 +12,39 @@ class AuthenticationTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_petugas_can_log_in_with_valid_username_and_password(): void
+    public function test_each_internal_role_can_log_in_with_the_same_form(): void
+    {
+        foreach (User::INTERNAL_ROLES as $role) {
+            $user = User::factory()->create([
+                'username' => 'login.'.$role,
+                'password' => Hash::make('rahasia'),
+                'role' => $role,
+            ]);
+
+            $this->post(route('login.attempt'), [
+                'username' => $user->username,
+                'password' => 'rahasia',
+            ])->assertRedirect(route('home'));
+
+            $this->assertAuthenticatedAs($user, 'web');
+            $this->post(route('logout'))->assertRedirect(route('login'));
+        }
+    }
+
+    public function test_student_role_cannot_log_in_through_the_internal_form(): void
     {
         $user = User::factory()->create([
-            'username' => 'petugas.tu',
+            'username' => 'login.siswa',
             'password' => Hash::make('rahasia'),
+            'role' => User::ROLE_SISWA,
         ]);
 
-        $response = $this->post(route('login.attempt'), [
-            'username' => 'petugas.tu',
+        $this->from(route('login'))->post(route('login.attempt'), [
+            'username' => $user->username,
             'password' => 'rahasia',
-        ]);
+        ])->assertRedirect(route('login'))->assertSessionHasErrors('username');
 
-        $response->assertRedirect(route('home'));
-        $this->assertAuthenticatedAs($user);
+        $this->assertGuest('web');
     }
 
     public function test_login_rejects_an_invalid_password(): void
@@ -84,6 +103,38 @@ class AuthenticationTest extends TestCase
     {
         $this->get(route('home'))
             ->assertRedirect(route('login'));
+    }
+
+    public function test_legacy_login_shows_role_pages_and_portal_login_can_switch_accounts(): void
+    {
+        $user = User::factory()->create(['nama' => 'Petugas Aktif']);
+
+        $this->actingAs($user)
+            ->get(route('login'))
+            ->assertOk()
+            ->assertSeeText(['Login Admin', 'Login TU', 'Login Kepala Sekolah'])
+            ->assertDontSee('name="password"', false);
+
+        $this->actingAs($user, 'tu')
+            ->get(route('portal.tu.login'))
+            ->assertRedirect(route('portal.tu.home'));
+
+        $this->get(route('portal.tu.login', ['switch' => 1]))
+            ->assertOk()
+            ->assertSeeText(['Login Internal', 'Akun aktif:', 'Petugas Aktif', 'Tata Usaha']);
+    }
+
+    public function test_authentication_pages_are_not_cached_by_the_browser(): void
+    {
+        $loginResponse = $this->get(route('login'));
+
+        $this->assertStringContainsString('no-store', (string) $loginResponse->headers->get('Cache-Control'));
+
+        $user = User::factory()->create();
+        $dashboardResponse = $this->actingAs($user)->get(route('home'));
+
+        $dashboardResponse->assertOk();
+        $this->assertStringContainsString('no-store', (string) $dashboardResponse->headers->get('Cache-Control'));
     }
 
     public function test_authenticated_petugas_can_log_out(): void

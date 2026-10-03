@@ -74,11 +74,12 @@ class PortalSiswaDanWaliTest extends TestCase
             ->assertSeeText('Belum ada tagihan SPP untuk siswa ini.');
     }
 
-    public function test_student_can_only_access_their_portal_and_tu_can_create_and_reset_the_account(): void
+    public function test_student_can_only_access_their_portal_and_admin_can_create_and_reset_the_account(): void
     {
         [$siswa, , $petugas] = $this->buatSiswaDanTagihan();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($petugas)
+        $this->actingAs($admin)
             ->post(route('master.siswa.akun.store', $siswa), [
                 'username' => 'siswa.portal',
                 'password' => 'password-baru',
@@ -91,7 +92,7 @@ class PortalSiswaDanWaliTest extends TestCase
         $this->assertSame($siswa->id_siswa, $akunSiswa->id_siswa);
         $this->assertTrue(Hash::check('password-baru', $akunSiswa->password));
 
-        $this->actingAs($petugas)
+        $this->actingAs($admin)
             ->patch(route('master.siswa.akun.password', $siswa), [
                 'password' => 'password-reset',
                 'password_confirmation' => 'password-reset',

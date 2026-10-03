@@ -15,7 +15,7 @@ class ErrorHandlingTest extends TestCase
 
     public function test_database_constraint_error_is_returned_as_a_clear_form_error(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Jurusan::creating(fn () => throw new QueryException(
             'mysql',
             'insert into jurusan',

@@ -25,7 +25,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_petugas_can_view_academic_master_data_and_filter_kelas(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $this->buatTahunAjaranAktif('2030/2031');
         TahunAjaran::create([
             'tahun_ajaran' => '2031/2032',
@@ -63,7 +63,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_store_automatically_prepares_only_the_next_academic_year(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $tahunAjaranAktif = $this->buatTahunAjaranAktif('2031/2032');
 
         $this->actingAs($user)->post(route('master.tahun-ajaran.store'), [
@@ -89,7 +89,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_create_page_is_not_available_for_manual_year_input(): void
     {
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get('/master-data/tahun-ajaran/create')
             ->assertStatus(405);
     }
@@ -165,7 +165,7 @@ class MasterDataAcademicTest extends TestCase
         $this->actingAs($user)
             ->patch(route('master.tahun-ajaran.activate', $tahunAjaranBerikutnya), ['password' => 'salah'])
             ->assertRedirect(route('master.tahun-ajaran.index'))
-            ->assertSessionHas('error', 'Password petugas tidak sesuai. Tahun ajaran tidak diaktifkan.');
+            ->assertSessionHas('error', 'Password Admin tidak sesuai. Tahun ajaran tidak diaktifkan.');
 
         $this->assertDatabaseHas('tahun_ajaran', [
             'id_tahun_ajaran' => $tahunAjaranAktif->id_tahun_ajaran,
@@ -184,7 +184,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_only_prepared_years_can_be_edited_or_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $tahunAjaranAktif = $this->buatTahunAjaranAktif('2038/2039');
         $tahunAjaranPersiapan = TahunAjaran::create([
             'tahun_ajaran' => '2039/2040',
@@ -271,7 +271,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_deactivation_is_rejected_when_active_year_has_class_history(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $tahunAjaranAktif = $this->buatTahunAjaranAktif('2042/2043');
         $jurusan = Jurusan::create(['kode_jurusan' => 'DTA', 'nama_jurusan' => 'Data Test']);
         $kelas = Kelas::create([
@@ -335,7 +335,7 @@ class MasterDataAcademicTest extends TestCase
 
     public function test_kelas_filter_accepts_rombel_above_four_and_rejects_invalid_values(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)
             ->from(route('master.kelas.index'))
@@ -368,7 +368,7 @@ class MasterDataAcademicTest extends TestCase
 
     private function buatPetugas(): User
     {
-        return User::factory()->create([
+        return User::factory()->admin()->create([
             'password' => Hash::make('rahasia'),
         ]);
     }

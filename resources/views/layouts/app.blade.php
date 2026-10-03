@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Sistem Pembayaran SPP')</title>
+    <title>@yield('title', 'Sistem Informasi Keuangan')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -82,7 +82,8 @@
         }
 
         .nav-link.active { background: #d0e1fb; color: #00288e; font-weight: 700; }
-        .nav-link.pending { color: #757684; cursor: default; }
+        .nav-link.pending { display: flex; align-items: center; justify-content: space-between; gap: .5rem; color: #757684; cursor: default; }
+        .nav-link.pending small { padding: .12rem .35rem; border-radius: 9999px; background: #eceef0; font-size: .58rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 
         .sidebar-footer {
             display: grid;
@@ -97,6 +98,7 @@
         .user-role { margin-top: .2rem; color: #505f76; font-size: .75rem; }
 
         .logout-button {
+            display: block;
             width: 100%;
             padding: .6rem .75rem;
             border: 1px solid #c4c5d5;
@@ -107,6 +109,7 @@
             font: inherit;
             font-size: .85rem;
             text-align: left;
+            text-decoration: none;
         }
 
         .workspace { min-width: 0; }
@@ -277,6 +280,7 @@
         .dashboard-summary-item:nth-child(4)::before { background: #ba1a1a; }
         .dashboard-summary-item span { color: #505f76; font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
          .dashboard-summary-item strong { align-self: end; color: #191c1e; font-size: 1.45rem; }
+         .dashboard-summary.two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
          .finance-chart-card { margin-bottom: 1.5rem; }
          .finance-chart-total { color: #087443; font-size: 1rem; white-space: nowrap; }
          .finance-line-chart { height: 18rem; padding: 1.5rem; }
@@ -339,7 +343,7 @@
             .history-detail-grid { grid-template-columns: 1fr; }
             .table-footer { align-items: start; flex-direction: column; }
              .report-summary { grid-template-columns: 1fr; }
-             .dashboard-summary, .dashboard-layout { grid-template-columns: 1fr; }
+              .dashboard-summary, .dashboard-summary.two-columns, .dashboard-layout { grid-template-columns: 1fr; }
              .finance-line-chart { height: 15rem; padding: 1rem .75rem; }
              .finance-line-details { padding: 1rem .75rem; font-size: .6rem; }
              .confirmation-dialog .form-actions { flex-direction: column-reverse; }
@@ -361,48 +365,22 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar">
-            <a class="brand" href="{{ route('home') }}">
+            <a class="brand" href="{{ route(auth()->user()->role === 'admin' ? 'admin.dashboard' : (auth()->user()->role === 'tu' ? 'tu.dashboard' : 'kepsek.dashboard')) }}">
                 <img class="brand-logo" src="{{ asset('images/cbi.png') }}?v={{ filemtime(public_path('images/cbi.png')) }}" alt="Logo SMK Informatika CBI">
                 <span class="brand-copy">
-                    <strong>Pembayaran SPP</strong>
-                    <span>Administrasi Sekolah</span>
+                    <strong>Sistem Informasi Keuangan</strong>
+                    <span>SMK Informatika CBI</span>
                 </span>
             </a>
 
             <nav class="navigation" aria-label="Navigasi utama">
-                <div class="navigation-group">
-                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Dashboard</a>
-                </div>
-
-                <div class="navigation-group">
-                    <p class="navigation-heading">Master Data</p>
-                    <a class="nav-link {{ request()->routeIs('master.siswa.*') ? 'active' : '' }}" href="{{ route('master.siswa.index') }}">Data Siswa</a>
-                    <a class="nav-link {{ request()->routeIs('master.jurusan.*') ? 'active' : '' }}" href="{{ route('master.jurusan.index') }}">Data Jurusan</a>
-                    <a class="nav-link {{ request()->routeIs('master.kelas.*') ? 'active' : '' }}" href="{{ route('master.kelas.index') }}">Data Kelas</a>
-                    <a class="nav-link {{ request()->routeIs('master.tahun-ajaran.*') ? 'active' : '' }}" href="{{ route('master.tahun-ajaran.index') }}">Tahun Ajaran</a>
-                    <a class="nav-link {{ request()->routeIs('master.tarif-spp.*') ? 'active' : '' }}" href="{{ route('master.tarif-spp.index') }}">Tarif SPP</a>
-                    <a class="nav-link {{ request()->routeIs('kenaikan-kelas.*') ? 'active' : '' }}" href="{{ route('kenaikan-kelas.preview') }}">Kenaikan Kelas</a>
-                </div>
-
-                <div class="navigation-group">
-                    <p class="navigation-heading">Pembayaran</p>
-                    <a class="nav-link {{ request()->routeIs('pembayaran.*') ? 'active' : '' }}" href="{{ route('pembayaran.index') }}">Transaksi Pembayaran</a>
-                    <a class="nav-link {{ request()->routeIs('riwayat-pembayaran.*') ? 'active' : '' }}" href="{{ route('riwayat-pembayaran.index') }}">Riwayat Pembayaran</a>
-                    <a class="nav-link {{ request()->routeIs('arsip-kwitansi.*') ? 'active' : '' }}" href="{{ route('arsip-kwitansi.index') }}">Arsip Kwitansi Siswa</a>
-                </div>
-
-                <div class="navigation-group">
-                    <p class="navigation-heading">Laporan</p>
-                    <a class="nav-link {{ request()->routeIs('rekap-pembayaran.*') ? 'active' : '' }}" href="{{ route('rekap-pembayaran.index') }}">Rekap Pembayaran</a>
-                    <a class="nav-link {{ request()->routeIs('laporan-tunggakan.*') ? 'active' : '' }}" href="{{ route('laporan-tunggakan.index') }}">Laporan Tunggakan</a>
-                    <a class="nav-link {{ request()->routeIs('status-spp.*') ? 'active' : '' }}" href="{{ route('status-spp.index') }}">Status Pembayaran SPP</a>
-                </div>
+                @include('layouts.navigation.'.str_replace('_', '-', auth()->user()->role))
             </nav>
 
             <div class="sidebar-footer">
                 <div>
                     <div class="user-name">{{ auth()->user()->nama }}</div>
-                    <div class="user-role">Petugas TU</div>
+                    <div class="user-role">{{ auth()->user()->roleLabel() }}</div>
                 </div>
 
                 <form method="POST" action="{{ route('logout') }}">
@@ -415,7 +393,7 @@
         <section class="workspace">
             <header class="topbar">
                 <div>
-                    <p class="eyebrow">Sistem Pembayaran SPP</p>
+                    <p class="eyebrow">Sistem Informasi Keuangan</p>
                     <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
                 </div>
             </header>
@@ -447,6 +425,12 @@
         </form>
     </dialog>
     <script>
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
         document.querySelectorAll('.data-table').forEach((table) => {
             if (table.dataset.sortable === 'false') {
                 return;

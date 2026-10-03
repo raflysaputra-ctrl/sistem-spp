@@ -36,7 +36,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_petugas_can_create_siswa_with_active_class_placement(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran] = $this->kelasDanTahunAjaranAktif();
 
         $response = $this->actingAs($user)->post(route('master.siswa.store'), [
@@ -77,7 +77,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_siswa_creation_is_rolled_back_when_active_year_has_no_tarif(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran, $tarif] = $this->kelasDanTahunAjaranAktif();
         $tarif->delete();
 
@@ -100,7 +100,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_petugas_can_edit_siswa_and_duplicate_nis_is_rejected(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $siswa = Siswa::create([
             'nipd' => '2501001',
             'nama_siswa' => 'Siti Aminah',
@@ -144,7 +144,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_petugas_can_edit_siswa_active_class_without_removing_previous_class_history(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelasAsal, $tahunAjaranAktif] = $this->kelasDanTahunAjaranAktif();
         $kelasTujuan = Kelas::create([
             'id_jurusan' => $kelasAsal->id_jurusan,
@@ -229,7 +229,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_siswa_can_be_deleted_permanently_when_it_has_no_payment_or_paid_bill(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran, $tarif] = $this->kelasDanTahunAjaranAktif();
         $siswa = Siswa::create([
             'nipd' => '2501003',
@@ -271,7 +271,8 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_siswa_with_payment_can_only_be_nonaktifkan_and_its_histori_remains_available(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
+        $tu = User::factory()->tu()->create();
         [$kelas, $tahunAjaran, $tarif] = $this->kelasDanTahunAjaranAktif();
         $siswa = Siswa::create([
             'nipd' => '2501004',
@@ -294,7 +295,7 @@ class MasterDataSiswaTest extends TestCase
             'nominal' => 150000,
             'status' => 'belum_bayar',
         ]);
-        $pembayaran = app(PembayaranService::class)->bayar($user, $siswa, [$tagihan->id_tagihan]);
+        $pembayaran = app(PembayaranService::class)->bayar($tu, $siswa, [$tagihan->id_tagihan]);
 
         $this->actingAs($user)
             ->from(route('master.siswa.index'))
@@ -320,10 +321,9 @@ class MasterDataSiswaTest extends TestCase
         $this->get(route('master.siswa.nonaktif'))
             ->assertOk()
             ->assertSeeText('Siswa Berhistori')
-            ->assertSee('Status SPP', false)
             ->assertSee('Riwayat Pembayaran', false)
             ->assertDontSeeText('Pulihkan');
-        $this->get(route('status-spp.show', $siswa))
+        $this->actingAs($tu)->get(route('status-spp.show', $siswa))
             ->assertOk()
             ->assertSeeText(['Siswa Berhistori', 'Juli 2090', 'Lunas']);
         $this->get(route('riwayat-pembayaran.index', ['cari' => $siswa->nipd]))
@@ -333,7 +333,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_siswa_forms_render_confirmation_controls(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $siswa = Siswa::create([
             'nipd' => '2501004',
             'nama_siswa' => 'Siswa Konfirmasi',
@@ -362,7 +362,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_petugas_can_search_siswa_by_nis_or_name(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Siswa::create([
             'nipd' => '2301001',
             'nama_siswa' => 'Dewi Lestari',
@@ -391,7 +391,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_graduated_students_are_hidden_by_default_and_shown_by_lulus_filter(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Siswa::create([
             'nipd' => 'STATUS-001',
             'nama_siswa' => 'Siswa Aktif',
@@ -421,7 +421,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_petugas_can_filter_siswa_by_status_and_active_class(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran] = $this->kelasDanTahunAjaranAktif();
         $jurusanLain = Jurusan::create([
             'kode_jurusan' => 'FLT',
@@ -483,7 +483,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_student_list_paginates_and_keeps_search_filter(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         foreach (range(1, 21) as $nomor) {
             Siswa::create([
@@ -512,7 +512,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_angkatan_choices_follow_active_year_and_preserve_older_student_value(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas] = $this->kelasDanTahunAjaranAktif();
 
         $this->actingAs($user)->get(route('master.siswa.create'))
@@ -558,7 +558,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_import_skips_duplicate_nis_in_the_same_file_and_on_reupload(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran] = $this->kelasDanTahunAjaranAktif();
 
         foreach ([2, 3] as $tingkat) {
@@ -618,7 +618,7 @@ class MasterDataSiswaTest extends TestCase
 
     public function test_import_detects_headers_in_any_row_and_column_order(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         [$kelas, $tahunAjaran] = $this->kelasDanTahunAjaranAktif();
 
         foreach ([2, 3] as $tingkat) {

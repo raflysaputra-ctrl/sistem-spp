@@ -7,6 +7,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,9 +22,28 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserRole::class,
         ]);
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('siswa/*') ? route('siswa.login') : route('login'));
-        $middleware->redirectUsersTo(fn (Request $request) => $request->is('siswa/*') ? route('siswa.status') : route('home'));
+        $middleware->redirectUsersTo(fn (Request $request) => $request->is('siswa/*') ? route('siswa.status') : route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
+            if (
+                $exception->getStatusCode() !== 419
+                || ! ($exception->getPrevious() instanceof TokenMismatchException)
+                || ! $request->routeIs('login.attempt', 'logout', 'siswa.login.attempt', 'siswa.logout')
+            ) {
+                return null;
+            }
+
+            $redirectRouteName = $request->is('siswa/*') ? 'siswa.login' : 'login';
+            $errorMessage = $request->is('siswa/*') 
+                ? 'Sesi siswa berubah karena login atau logout dilakukan di tab lain. Muat ulang halaman sebelum melanjutkan.'
+                : 'Sesi internal berubah karena login atau logout dilakukan di tab lain. Muat ulang halaman sebelum melanjutkan.';
+
+            return to_route($redirectRouteName)->withErrors([
+                'form' => $errorMessage,
+            ]);
+        });
+
         $exceptions->render(function (QueryException $exception, Request $request) {
             if ($request->expectsJson() || $request->isMethod('GET')) {
                 return null;

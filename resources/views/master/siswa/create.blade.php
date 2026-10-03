@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Siswa | Sistem Pembayaran SPP')
+@section('title', 'Tambah Siswa | Sistem Informasi Keuangan')
 @section('page-title', 'Data Siswa')
 
 @section('content')

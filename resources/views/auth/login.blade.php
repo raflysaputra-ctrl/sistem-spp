@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login Petugas TU</title>
+    <title>Login Internal | Sistem Informasi Keuangan</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -39,20 +39,23 @@
         <section class="login-intro">
             <div class="brand">
                 <img class="school-logo" src="{{ asset('images/cbi.png') }}" alt="Logo SMK Informatika CBI">
-                <span>SMK Informatika CBI</span>
             </div>
 
             <div class="intro-copy">
                 <p>Administrasi Sekolah</p>
-                <h1>Pembayaran&nbsp;SPP<br>SMK Informatika CBI</h1>
-                <span>Masuk untuk mengelola data pembayaran SPP sekolah.</span>
+                <h1>Sistem Informasi Keuangan<br>SMK&nbsp;Informatika&nbsp;CBI</h1>
+                <span>Masuk untuk mengakses layanan sesuai peran akun internal.</span>
             </div>
         </section>
 
         <section class="login-panel" aria-labelledby="login-heading">
             <div class="login-card">
-                <h2 id="login-heading">Login Petugas TU</h2>
-                <p>Gunakan akun petugas yang telah terdaftar.</p>
+                <h2 id="login-heading">Login Internal</h2>
+                <p>Masukkan username dan password Anda. Sistem akan mengarahkan ke dashboard sesuai peran akun.</p>
+
+                @if ($errors->has('form'))
+                    <p class="error" role="alert">{{ $errors->first('form') }}</p>
+                @endif
 
                 <form method="POST" action="{{ route('login.attempt') }}">
                     @csrf
@@ -78,5 +81,12 @@
             </div>
         </section>
     </main>
+    <script>
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
 </body>
 </html>

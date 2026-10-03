@@ -10,12 +10,37 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['username' => 'admin'],
+        $users = [
+            [
+                'nama' => 'Test',
+                'username' => 'tu',
+                'password' => 'tu123456',
+                'role' => User::ROLE_TU,
+            ],
             [
                 'nama' => 'Admin',
-                'password' => Hash::make('admin123'),
+                'username' => 'admin',
+                'password' => 'admin123',
+                'role' => User::ROLE_ADMIN,
             ],
-        );
+            [
+                'nama' => 'Kepala Sekolah',
+                'username' => 'kepsek',
+                'password' => 'kepsek123',
+                'role' => User::ROLE_KEPALA_SEKOLAH,
+            ],
+        ];
+
+        foreach ($users as $user) {
+            User::updateOrCreate(
+                ['username' => $user['username']],
+                [
+                    'nama' => $user['nama'],
+                    'password' => Hash::make($user['password']),
+                    'role' => $user['role'],
+                    'id_siswa' => null,
+                ],
+            );
+        }
     }
 }

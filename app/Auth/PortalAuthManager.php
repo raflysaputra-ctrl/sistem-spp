@@ -10,7 +10,7 @@ class PortalAuthManager extends AuthManager
     public function createSessionDriver($name, $config)
     {
         $sessions = $this->app->make(PortalSessionManager::class);
-        $context = $name === 'siswa' ? 'siswa' : 'web';
+        $context = in_array($name, ['admin', 'tu', 'kepsek', 'siswa'], true) ? $name : 'web';
 
         $this->app->instance('session.store', $sessions->driverForContext($context));
 

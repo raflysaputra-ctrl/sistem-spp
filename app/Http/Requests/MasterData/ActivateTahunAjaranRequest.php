@@ -31,9 +31,9 @@ class ActivateTahunAjaranRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.required' => 'Password petugas wajib diisi untuk mengaktifkan tahun ajaran.',
-            'password.string' => 'Password petugas tidak valid.',
-            'password.max' => 'Password petugas tidak valid.',
+            'password.required' => 'Password Admin wajib diisi untuk mengaktifkan tahun ajaran.',
+            'password.string' => 'Password Admin tidak valid.',
+            'password.max' => 'Password Admin tidak valid.',
         ];
     }
 }

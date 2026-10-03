@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Siswa Nonaktif | Sistem Pembayaran SPP')
+@section('title', 'Siswa Nonaktif | Sistem Informasi Keuangan')
 @section('page-title', 'Master Data')
 
 @section('content')
@@ -49,7 +49,6 @@
                             <td>{{ $item->deleted_at?->format('d/m/Y H:i') }}</td>
                             <td class="text-right">
                                 <span class="action-stack">
-                                    <a class="button button-secondary button-small" href="{{ route('status-spp.show', $item) }}">Status SPP</a>
                                     <a class="button button-secondary button-small" href="{{ route('riwayat-pembayaran.index', ['cari' => $item->nipd]) }}">Riwayat Pembayaran</a>
                                 </span>
                             </td>

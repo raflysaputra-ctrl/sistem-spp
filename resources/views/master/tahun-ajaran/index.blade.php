@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tahun Ajaran | Sistem Pembayaran SPP')
+@section('title', 'Tahun Ajaran | Sistem Informasi Keuangan')
 @section('page-title', 'Master Data')
 
 @section('content')
@@ -69,7 +69,7 @@
                             <td class="text-right">
                                 @if ($periode->isPersiapan())
                                     <a class="button button-secondary button-small" href="{{ route('master.tahun-ajaran.edit', $periode) }}">Edit</a>
-                                    <form class="inline-form" method="POST" action="{{ route('master.tahun-ajaran.activate', $periode) }}" data-confirm data-confirm-title="Aktifkan tahun ajaran?" data-confirm-message="Masukkan password petugas untuk melanjutkan. Tahun ajaran aktif saat ini akan ditutup dan tidak dapat digunakan kembali." data-confirm-submit="Aktifkan" data-confirm-input-name="password" data-confirm-input-type="password" data-confirm-input-label="Password akun petugas" data-confirm-input-autocomplete="current-password">
+                                    <form class="inline-form" method="POST" action="{{ route('master.tahun-ajaran.activate', $periode) }}" data-confirm data-confirm-title="Aktifkan tahun ajaran?" data-confirm-message="Masukkan password Admin untuk melanjutkan. Tahun ajaran aktif saat ini akan ditutup dan tidak dapat digunakan kembali." data-confirm-submit="Aktifkan" data-confirm-input-name="password" data-confirm-input-type="password" data-confirm-input-label="Password akun Admin" data-confirm-input-autocomplete="current-password">
                                         @csrf
                                         @method('PATCH')
                                         <button class="button button-primary button-small" type="submit">Aktifkan</button>

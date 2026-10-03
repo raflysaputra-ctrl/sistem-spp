@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Data Siswa | Sistem Pembayaran SPP')
+@section('title', 'Data Siswa | Sistem Informasi Keuangan')
 @section('page-title', 'Master Data')
 
 @section('content')
@@ -97,8 +97,6 @@
                             </td>
                             <td class="text-right">
                                 <span class="action-stack">
-                                      <a class="button button-secondary button-small" href="{{ route('status-spp.show', $item) }}">Status SPP</a>
-                                      <a class="button button-secondary button-small" href="{{ route('master.siswa.akun.show', $item) }}">Akun Siswa</a>
                                       <a class="button button-secondary button-small" href="{{ route('master.siswa.edit', $item) }}">Edit</a>
                                       <form class="inline-form" method="POST" action="{{ route('master.siswa.nonaktifkan', $item) }}" data-confirm data-confirm-title="Non-aktifkan siswa?" data-confirm-message="Siswa akan disembunyikan dari daftar aktif. Riwayat kelas, tagihan, dan pembayaran tetap tersimpan." data-confirm-submit="Non-aktifkan Siswa" data-confirm-input-name="konfirmasi_nipd" data-confirm-input-label="Ketik NIPD {{ $item->nipd }} untuk melanjutkan" data-confirm-input-value="{{ $item->nipd }}">
                                            @csrf

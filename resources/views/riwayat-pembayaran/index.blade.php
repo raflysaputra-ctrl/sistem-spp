@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Riwayat Pembayaran | Sistem Pembayaran SPP')
+@section('title', 'Riwayat Pembayaran | Sistem Informasi Keuangan')
 @section('page-title', 'Riwayat Pembayaran')
 
 @section('content')
@@ -13,7 +13,9 @@
             <h2>Riwayat Pembayaran</h2>
             <p>Daftar transaksi pembayaran yang telah tercatat. Pilih detail untuk melihat periode dan nominal setiap tagihan.</p>
         </div>
-        <a class="button button-primary" href="{{ route('pembayaran.index') }}">Input Transaksi Baru</a>
+        @if (auth()->user()->role === \App\Models\User::ROLE_TU)
+            <a class="button button-primary" href="{{ route('pembayaran.index') }}">Input Transaksi Baru</a>
+        @endif
     </div>
 
     <section class="data-card">

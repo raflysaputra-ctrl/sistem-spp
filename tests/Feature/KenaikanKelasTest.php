@@ -28,7 +28,7 @@ class KenaikanKelasTest extends TestCase
     {
         $data = $this->dataKenaikanKelas();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('kenaikan-kelas.preview'))
             ->assertOk()
             ->assertSeeText([
@@ -59,7 +59,7 @@ class KenaikanKelasTest extends TestCase
             );
         }
 
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)
             ->get(route('kenaikan-kelas.preview'))
@@ -104,7 +104,7 @@ class KenaikanKelasTest extends TestCase
     {
         $data = $this->dataKenaikanKelas();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->post(route('kenaikan-kelas.proses'))
             ->assertRedirect(route('kenaikan-kelas.preview'))
             ->assertSessionHas('status');
@@ -132,7 +132,7 @@ class KenaikanKelasTest extends TestCase
     {
         $data = $this->dataKenaikanKelas();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->post(route('kenaikan-kelas.proses'), [
                 'tetap_di_kelas_asal' => [
                     $data['siswaX']->id_siswa,
@@ -165,7 +165,7 @@ class KenaikanKelasTest extends TestCase
                 ->andThrow(new LogicException('Simulasi pembuatan tagihan gagal.'));
         });
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->from(route('kenaikan-kelas.preview'))
             ->post(route('kenaikan-kelas.proses'))
             ->assertRedirect(route('kenaikan-kelas.preview'))

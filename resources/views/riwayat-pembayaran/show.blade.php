@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Riwayat '.$pembayaran->no_kwitansi.' | Sistem Pembayaran SPP')
+@section('title', 'Detail Riwayat '.$pembayaran->no_kwitansi.' | Sistem Informasi Keuangan')
 @section('page-title', 'Detail Riwayat Pembayaran')
 
 @section('content')
@@ -69,7 +69,7 @@
         </div>
     </section>
 
-    @if ($pembayaran->status !== 'dibatalkan')
+    @if (auth()->user()->role === \App\Models\User::ROLE_ADMIN && $pembayaran->status !== 'dibatalkan')
         <section class="data-card" style="margin-bottom: 1.5rem;">
             <div class="card-header">
                 <div>
@@ -96,38 +96,40 @@
         </section>
     @endif
 
-    <section class="data-card" style="margin-bottom: 1.5rem;">
-        <div class="card-header">
-            <div>
-                <h3>Arsip Foto Kwitansi</h3>
-                <p>Foto diunggah siswa sebagai arsip dan tidak mengubah status pembayaran.</p>
+    @if (auth()->user()->role === \App\Models\User::ROLE_TU)
+        <section class="data-card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <div>
+                    <h3>Arsip Foto Kwitansi</h3>
+                    <p>Foto diunggah siswa sebagai arsip dan tidak mengubah status pembayaran.</p>
+                </div>
             </div>
-        </div>
-        <div class="table-scroll">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Diunggah</th>
-                        <th>Jenis File</th>
-                        <th>Ukuran</th>
-                        <th class="text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if ($arsip = $pembayaran->arsipKwitansi)
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td class="text-mono">{{ $arsip->created_at->format('d/m/Y H:i') }}</td>
-                            <td>{{ $arsip->mime_type }}</td>
-                            <td>{{ number_format($arsip->ukuran_file / 1024, 1, ',', '.') }} KB</td>
-                            <td class="text-right"><a class="button button-secondary button-small" href="{{ route('arsip-kwitansi.show', $arsip) }}" target="_blank" rel="noopener">Lihat Foto</a></td>
+                            <th>Diunggah</th>
+                            <th>Jenis File</th>
+                            <th>Ukuran</th>
+                            <th class="text-right">Aksi</th>
                         </tr>
-                    @else
-                        <tr><td class="empty-state" colspan="4">Belum ada foto kwitansi yang diarsipkan untuk transaksi ini.</td></tr>
-                    @endif
-                </tbody>
-            </table>
-        </div>
-    </section>
+                    </thead>
+                    <tbody>
+                        @if ($arsip = $pembayaran->arsipKwitansi)
+                            <tr>
+                                <td class="text-mono">{{ $arsip->created_at->format('d/m/Y H:i') }}</td>
+                                <td>{{ $arsip->mime_type }}</td>
+                                <td>{{ number_format($arsip->ukuran_file / 1024, 1, ',', '.') }} KB</td>
+                                <td class="text-right"><a class="button button-secondary button-small" href="{{ route('arsip-kwitansi.show', $arsip) }}" target="_blank" rel="noopener">Lihat Foto</a></td>
+                            </tr>
+                        @else
+                            <tr><td class="empty-state" colspan="4">Belum ada foto kwitansi yang diarsipkan untuk transaksi ini.</td></tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @endif
 
     <section class="data-card">
         <div class="card-header">
