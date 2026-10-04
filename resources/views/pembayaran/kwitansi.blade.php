@@ -17,7 +17,11 @@
 
     <section class="receipt-preview">
         <div class="receipt-actions">
-            <a class="button button-secondary" href="{{ route('pembayaran.show', $pembayaran->siswa) }}">Kembali ke Tagihan</a>
+            @if (auth()->user()->role === 'tu')
+                <a class="button button-secondary" href="{{ route('pembayaran.show', $pembayaran->siswa) }}">Kembali ke Tagihan</a>
+            @else
+                <a class="button button-secondary" href="{{ route('riwayat-pembayaran.show', $pembayaran) }}">Kembali ke Riwayat</a>
+            @endif
             <div class="receipt-actions-group">
                 <button class="button button-primary" type="button" onclick="window.print()">Cetak Kwitansi</button>
             </div>

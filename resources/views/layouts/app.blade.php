@@ -60,8 +60,46 @@
         .brand-copy strong { font-size: .95rem; }
         .brand-copy span { margin-top: .2rem; color: #444653; font-size: .72rem; }
 
-        .navigation { display: grid; flex: 1; min-height: 0; gap: 1rem; overflow-y: auto; }
+        .navigation { display: grid; align-content: start; flex: 1; min-height: 0; gap: 1rem; overflow-y: auto; }
         .navigation-group { display: grid; gap: .2rem; }
+        .navigation-group.has-submenu { gap: 0; }
+        .navigation-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0;
+            padding: 0 .75rem;
+            color: #505f76;
+            font-size: .67rem;
+            font-weight: 700;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            user-select: none;
+            min-height: 1.5rem;
+        }
+        .navigation-group-header:hover { color: #191c1e; }
+        .navigation-group-header .indicator {
+            display: inline-block;
+            font-size: .6rem;
+            transition: transform 0.2s ease;
+            margin-left: .25rem;
+        }
+        .navigation-group.is-collapsed .navigation-group-header .indicator { transform: rotate(-90deg); }
+        .navigation-group-content {
+            display: grid;
+            gap: .2rem;
+            margin-bottom: .25rem;
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.2s ease, margin-bottom 0.2s ease;
+        }
+        .navigation-group.is-collapsed .navigation-group-content {
+            max-height: 0;
+            margin-bottom: 0;
+        }
         .navigation-heading {
             margin: 0 0 .25rem;
             padding: 0 .75rem;
@@ -522,6 +560,30 @@
 
             return { type: 'text', value: 0, text };
         }
+
+        // Collapsible Navigation
+        document.querySelectorAll('.navigation-group-header').forEach((header) => {
+            header.addEventListener('click', () => {
+                const group = header.closest('.navigation-group');
+                group.classList.toggle('is-collapsed');
+                
+                // Save state to sessionStorage
+                const groupIndex = Array.from(document.querySelectorAll('.navigation-group-header')).indexOf(header);
+                const isCollapsed = group.classList.contains('is-collapsed');
+                sessionStorage.setItem(`nav-group-${groupIndex}`, isCollapsed ? 'collapsed' : 'expanded');
+            });
+        });
+
+        // Restore collapsed state from sessionStorage
+        document.querySelectorAll('.navigation-group-header').forEach((header, index) => {
+            const group = header.closest('.navigation-group');
+            const savedState = sessionStorage.getItem(`nav-group-${index}`);
+            
+            // Only collapse if explicitly saved as collapsed AND group doesn't have active item
+            if (savedState === 'collapsed' && !group.querySelector('.nav-link.active')) {
+                group.classList.add('is-collapsed');
+            }
+        });
     </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ class LayoutNavigationTest extends TestCase
     {
         $admin = User::factory()->admin()->create(['nama' => 'Admin Sistem']);
 
-        $this->actingAs($admin)->get(route('home'))
+        $this->actingAs($admin)->followingRedirects()->get(route('home'))
             ->assertOk()
             ->assertSeeText([
                 'Sistem Informasi Keuangan',
@@ -45,7 +45,7 @@ class LayoutNavigationTest extends TestCase
     {
         $tu = User::factory()->tu()->create(['nama' => 'Petugas TU']);
 
-        $this->actingAs($tu)->get(route('home'))
+        $this->actingAs($tu)->followingRedirects()->get(route('home'))
             ->assertOk()
             ->assertSeeText([
                 'Tata Usaha',
@@ -75,7 +75,7 @@ class LayoutNavigationTest extends TestCase
     {
         $kepalaSekolah = User::factory()->kepalaSekolah()->create(['nama' => 'Kepala Sekolah']);
 
-        $this->actingAs($kepalaSekolah)->get(route('home'))
+        $this->actingAs($kepalaSekolah)->followingRedirects()->get(route('home'))
             ->assertOk()
             ->assertSeeText([
                 'Kepala Sekolah',
@@ -94,7 +94,7 @@ class LayoutNavigationTest extends TestCase
     {
         $tu = User::factory()->tu()->create();
 
-        $this->actingAs($tu)->get(route('home'))
+        $this->actingAs($tu)->followingRedirects()->get(route('home'))
             ->assertOk()
             ->assertSee('table-sort-button', false)
             ->assertSee("indicator.textContent = '↕'", false)

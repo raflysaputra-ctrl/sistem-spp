@@ -24,6 +24,7 @@ class DashboardTest extends TestCase
         $user = User::factory()->tu()->create(['nama' => 'Petugas Dashboard']);
 
         $this->actingAs($user)
+            ->followingRedirects()
             ->get(route('home'))
             ->assertOk()
             ->assertViewIs('dashboard.tu')
@@ -48,6 +49,7 @@ class DashboardTest extends TestCase
         $admin = User::factory()->admin()->create(['nama' => 'Admin Keuangan']);
 
         $this->actingAs($admin)
+            ->followingRedirects()
             ->get(route('home'))
             ->assertOk()
             ->assertViewIs('dashboard.admin')
@@ -68,6 +70,7 @@ class DashboardTest extends TestCase
         $kepalaSekolah = User::factory()->kepalaSekolah()->create(['nama' => 'Kepala Sekolah']);
 
         $this->actingAs($kepalaSekolah)
+            ->followingRedirects()
             ->get(route('home'))
             ->assertOk()
             ->assertViewIs('dashboard.kepala-sekolah')
@@ -106,6 +109,7 @@ class DashboardTest extends TestCase
             ]);
 
             $this->actingAs($user)
+                ->followingRedirects()
                 ->get(route('home'))
                 ->assertOk()
                 ->assertSeeText([
@@ -157,6 +161,7 @@ class DashboardTest extends TestCase
             ]);
 
             $this->actingAs($user)
+                ->followingRedirects()
                 ->get(route('home'))
                 ->assertOk()
                 ->assertViewHas('jumlahTransaksiHariIni', 1)

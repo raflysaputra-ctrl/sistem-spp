@@ -128,7 +128,9 @@
                         <th class="text-right">Nominal</th>
                         <th>Petugas TU</th>
                         <th>Status</th>
-                        <th class="text-right">Aksi</th>
+                        @if (auth()->user()->role !== 'kepala_sekolah')
+                            <th class="text-right">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -145,13 +147,15 @@
                             <td class="text-mono text-right"><strong>Rp {{ number_format($detail->nominal_bayar, 0, ',', '.') }}</strong></td>
                             <td>{{ $detail->pembayaran->user->nama }}</td>
                             <td>{{ $detail->pembayaran->status === 'aktif' ? 'Aktif' : 'Dibatalkan' }}</td>
-                            <td class="text-right">
-                                <a class="button button-secondary button-small" href="{{ route('riwayat-pembayaran.show', $detail->pembayaran) }}">Detail</a>
-                            </td>
+                            @if (auth()->user()->role !== 'kepala_sekolah')
+                                <td class="text-right">
+                                    <a class="button button-secondary button-small" href="{{ route('riwayat-pembayaran.show', $detail->pembayaran) }}">Detail</a>
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td class="empty-state" colspan="9">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
+                            <td class="empty-state" colspan="{{ auth()->user()->role !== 'kepala_sekolah' ? '9' : '8' }}">Tidak ada pembayaran yang sesuai dengan filter rekap.</td>
                         </tr>
                     @endforelse
                 </tbody>
