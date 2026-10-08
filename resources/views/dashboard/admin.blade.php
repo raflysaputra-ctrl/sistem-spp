@@ -19,7 +19,7 @@
             <a href="{{ route('master.siswa.index') }}"><span>Kelola Data Siswa</span><span aria-hidden="true">›</span></a>
             <a href="{{ route('master.tahun-ajaran.index') }}"><span>Kelola Tahun Ajaran</span><span aria-hidden="true">›</span></a>
             <a href="{{ route('riwayat-pembayaran.index') }}"><span>Tinjau Pembatalan Transaksi</span><span aria-hidden="true">›</span></a>
-            <a href="{{ route('rekap-pembayaran.index') }}"><span>Lihat Rekap Pembayaran</span><span aria-hidden="true">›</span></a>
+            <a href="{{ route('rekap-pembayaran.index') }}"><span>Lihat Rekap Penerimaan</span><span aria-hidden="true">›</span></a>
         </nav>
     </section>
 @endsection

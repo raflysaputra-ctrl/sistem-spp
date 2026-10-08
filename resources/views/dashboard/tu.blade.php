@@ -9,7 +9,7 @@
             <h2>Selamat datang, {{ auth()->user()->nama }}.</h2>
             <p>Ringkasan operasional penerimaan dan pembayaran SPP.</p>
         </div>
-        <a class="button button-primary" href="{{ route('pembayaran.index') }}">Input Transaksi Baru</a>
+        <a class="button button-primary" href="{{ route('penerimaan.index') }}">Input Pembayaran Baru</a>
     </div>
 
     <section class="dashboard-summary" aria-label="Ringkasan sistem">
@@ -36,7 +36,7 @@
                     <h3>Transaksi Terbaru</h3>
                     <p>Lima transaksi terakhir berdasarkan tanggal pembayaran.</p>
                 </div>
-                <a class="button button-secondary button-small" href="{{ route('riwayat-pembayaran.index') }}">Lihat Semua</a>
+                <a class="button button-secondary button-small" href="{{ route('penerimaan.riwayat') }}">Lihat Semua</a>
             </div>
 
             <div class="table-scroll">
@@ -54,7 +54,8 @@
                     <tbody>
                         @forelse ($transaksiTerbaru as $pembayaran)
                             @php
-                                $kelas = $pembayaran->detailPembayaran
+                                $detailSpp = $pembayaran->pembayaranSpp?->detailPembayaran ?? collect();
+                                $kelas = $detailSpp
                                     ->map(fn ($detail) => $detail->tagihanSpp->siswaKelas->kelas->nama_kelas)
                                     ->unique()
                                     ->implode(', ');
@@ -83,7 +84,7 @@
         <aside class="dashboard-quick-actions">
             <h3>Pencarian Cepat</h3>
             <p>Cari siswa berdasarkan NIPD atau nama untuk melihat tagihan dan mencatat pembayaran.</p>
-            <form class="dashboard-search" method="GET" action="{{ route('pembayaran.index') }}">
+            <form class="dashboard-search" method="GET" action="{{ route('penerimaan.index') }}">
                 <label for="cari">NIPD atau Nama Siswa</label>
                 <input id="cari" name="cari" placeholder="Masukkan NIPD atau nama" type="search">
                 <button class="button button-secondary" type="submit">Cari Siswa</button>
@@ -91,8 +92,8 @@
 
             <nav class="dashboard-links" aria-label="Aksi cepat">
                 <a href="{{ route('status-spp.index') }}"><span>Status Pembayaran SPP</span><span aria-hidden="true">›</span></a>
-                <a href="{{ route('riwayat-pembayaran.index') }}"><span>Riwayat Pembayaran</span><span aria-hidden="true">›</span></a>
-                <a href="{{ route('rekap-pembayaran.index') }}"><span>Rekap Pembayaran</span><span aria-hidden="true">›</span></a>
+                <a href="{{ route('penerimaan.riwayat') }}"><span>Riwayat Pembayaran</span><span aria-hidden="true">›</span></a>
+                <a href="{{ route('rekap-pembayaran.index') }}"><span>Rekap Penerimaan</span><span aria-hidden="true">›</span></a>
             </nav>
         </aside>
     </section>

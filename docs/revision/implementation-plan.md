@@ -223,43 +223,64 @@ Pengeluaran dan Rekap Keuangan final menunggu modul terkait.
 
 ---
 
-# R3 - Konfirmasi Requirement Penerimaan Non-SPP
+# R3 - Penerimaan Non-SPP
 
-**Status:** BLOCKED - MENUNGGU PIHAK TU
+**Status:** COMPLETED FOR CONFIRMED SCOPE - TBD ITEMS DEFERRED
 
 ## Tujuan
 
-Mengumpulkan requirement resmi sebelum desain teknis.
+Membangun penerimaan non-SPP secara bertahap tanpa merusak flow SPP existing.
 
-## Data yang Wajib Diperoleh
+## Keputusan Dasar
 
-- daftar jenis pembayaran selain SPP;
-- aturan UJIKOM;
-- nominal/dasar tarif;
-- siapa siswa yang dikenakan;
-- sekali bayar/berkala;
-- cicilan;
-- jatuh tempo/denda jika ada;
-- aturan kwitansi;
-- apakah satu transaksi dapat mencampur beberapa jenis pembayaran;
-- apakah pembayaran tersebut tampil pada Portal Siswa/Wali;
-- apakah foto kwitansi berlaku untuk transaksi non-SPP.
+- jenis awal: PTS, PAS, PKL, UJIKOM, dan Biaya Awal Masuk;
+- Admin membuat tagihan massal untuk satu jenis; seluruh periode jenis tersebut diisi dalam satu form/proses;
+- PTS/PAS wajib lunas dalam satu transaksi;
+- PKL, UJIKOM, dan Biaya Awal Masuk dapat dicicil sesuai minimal DP pada tagihan;
+- periode wajib terstruktur: Semester 1/2 untuk PTS/PAS, Gelombang 1/2/3 untuk Biaya Awal Masuk, dan tahunan untuk PKL/UJIKOM;
+- satu kwitansi dapat memuat beberapa tagihan non-SPP milik satu siswa;
+- satu kwitansi non-SPP tidak boleh mencampur tagihan SPP;
+- pembatalan seluruh kwitansi non-SPP hanya dilakukan Admin dengan alasan dan audit trail;
+- rekap tujuan akhir adalah satu Rekap Penerimaan dengan pembeda SPP/non-SPP.
 
-## Output
+## Increment Selesai
 
-Update `docs/revision/prd.md` dan `database-design.md` berdasarkan keputusan nyata.
+- struktur header/detail kwitansi non-SPP;
+- generate tagihan massal terstruktur;
+- pembayaran TU multi-tagihan dalam satu kwitansi;
+- pembatalan kwitansi non-SPP oleh Admin;
+- Rekap Penerimaan yang menampilkan SPP dan non-SPP secara terpisah pada satu halaman;
+- regression test flow inti, data legacy, dan snapshot kwitansi dibatalkan.
 
-Tidak ada coding business logic pada milestone ini.
+Export Excel/PDF existing dipertahankan khusus SPP sampai bentuk final export Rekap Penerimaan dikonfirmasi.
+
+## Masih Menunggu Keputusan
+
+- nominal dan minimal DP Biaya Awal Masuk Gelombang 2/3;
+- apakah non-SPP tampil pada Portal Siswa/Wali;
+- apakah foto kwitansi siswa berlaku untuk non-SPP;
+- bentuk akhir Rekap Penerimaan dan exportnya.
 
 ---
 
 # R4 - Desain Penerimaan Umum
 
-**Status:** BLOCKED BY R3
+**Status:** COMPLETED FOR CONFIRMED UNIFIED RECEIPT SCOPE
 
 ## Tujuan
 
 Menentukan desain jenis pembayaran/tagihan/pembayaran yang dapat mendukung SPP dan penerimaan lain tanpa merusak flow SPP existing.
+
+## Keputusan yang Diimplementasikan
+
+- TU memakai satu halaman `Input Pembayaran` untuk memilih tagihan satu siswa;
+- dropdown jenis pembayaran berfungsi sebagai filter tampilan dan tidak menghapus pilihan jenis lain;
+- satu kwitansi baru dapat memuat SPP dan beberapa tagihan non-SPP;
+- SPP dan non-SPP tetap memakai tabel/detail serta aturan bisnis masing-masing;
+- tabel `penerimaan` menjadi header dan sumber nomor kwitansi gabungan;
+- penyimpanan dan pembatalan seluruh isi kwitansi dilakukan secara atomik;
+- satu foto Portal Siswa terhubung ke satu kwitansi gabungan;
+- transaksi lama tetap dipertahankan dan hanya transaksi baru memakai header gabungan.
 
 ## Catatan
 
@@ -286,15 +307,16 @@ Detail mengikuti hasil R3/R4.
 
 # R6 - Modul Pengeluaran
 
-**Status:** BLOCKED - MENUNGGU PIHAK TU
+**Status:** COMPLETED FOR CONFIRMED SCOPE
 
-## Requirement yang Dibutuhkan
+## Keputusan yang Diimplementasikan
 
-- kategori pengeluaran;
-- siapa yang boleh input;
-- bukti transaksi;
-- koreksi/pembatalan;
-- format rekap.
+- kategori awal: Alat Tulis Kantor, Listrik dan Internet, Pemeliharaan Sarana, dan Kegiatan Sekolah;
+- Admin mengelola master kategori dan dapat menonaktifkan kategori tanpa menghapus histori;
+- TU mencatat pengeluaran dengan tanggal, kategori, nominal, dan keterangan;
+- tidak ada upload bukti, metode pembayaran, nomor transaksi, atau approval Kepala Sekolah;
+- pembatalan hanya dilakukan Admin dengan alasan, verifikasi password, dan audit metadata;
+- rekap pengeluaran tetap menjadi scope R7 sampai formatnya dikonfirmasi.
 
 ## Scope Target
 
@@ -303,6 +325,14 @@ Detail mengikuti hasil R3/R4.
 - riwayat pengeluaran;
 - authorization;
 - audit metadata yang diperlukan.
+
+## Increment Selesai
+
+- master kategori pengeluaran;
+- input pengeluaran oleh TU;
+- riwayat pengeluaran untuk Admin dan TU;
+- pembatalan tanpa hard delete oleh Admin;
+- authorization server-side dan regression test dasar.
 
 ---
 
@@ -404,16 +434,15 @@ Mengurangi kepadatan `siswa/status-spp` tanpa menghapus fitur existing.
 
 ## Current Execution Point
 
-Revision milestone yang boleh dikerjakan sekarang:
+Revision milestone yang aktif dikerjakan sekarang:
 
 ```text
-R0 -> R1 -> R2
+R0 -> R1 -> R2 -> R3 (increment penerimaan non-SPP)
 ```
 
 Revision milestone berikut masih menunggu requirement pihak TU:
 
 ```text
-R3 -> R4 -> R5
 R6
 ```
 

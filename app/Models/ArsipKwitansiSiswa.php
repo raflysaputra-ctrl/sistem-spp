@@ -14,6 +14,7 @@ class ArsipKwitansiSiswa extends Model
     protected $fillable = [
         'id_siswa',
         'id_pembayaran',
+        'id_penerimaan',
         'path',
         'mime_type',
         'ukuran_file',
@@ -34,5 +35,10 @@ class ArsipKwitansiSiswa extends Model
     public function pembayaran(): BelongsTo
     {
         return $this->belongsTo(Pembayaran::class, 'id_pembayaran', 'id_pembayaran');
+    }
+
+    public function penerimaan(): BelongsTo
+    {
+        return $this->belongsTo(Penerimaan::class, 'id_penerimaan', 'id_penerimaan');
     }
 }

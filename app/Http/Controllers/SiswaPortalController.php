@@ -31,6 +31,7 @@ class SiswaPortalController extends Controller
                     ->whereHas('pembayaran', fn (Builder $query) => $query->where('status', 'aktif'))
                     ->with([
                         'pembayaran.arsipKwitansi',
+                        'pembayaran.penerimaan.arsipKwitansi',
                         'pembayaran.detailPembayaran.tagihanSpp',
                     ]),
             ])
@@ -38,14 +39,25 @@ class SiswaPortalController extends Controller
             ->orderBy('bulan')
             ->get();
 
+        $penerimaanNonSppSaja = $siswa->penerimaan()
+            ->with(['arsipKwitansi', 'pembayaranNonSpp.detailPembayaranNonSpp.tagihanPembayaran.jenisPembayaran'])
+            ->where('status', 'aktif')
+            ->whereDoesntHave('pembayaranSpp')
+            ->whereHas('pembayaranNonSpp')
+            ->orderByDesc('tanggal_bayar')
+            ->get();
+
         return view('portal-siswa.status', [
             'siswa' => $siswa,
             'kelasAktif' => $kelasAktif,
             'tagihanSpp' => $tagihanSpp,
-            'adaTransaksiDapatDiunggah' => $tagihanSpp->contains(
-                fn ($tagihan) => ($pembayaran = $tagihan->detailPembayaran->first()?->pembayaran)
-                    && ! $pembayaran->arsipKwitansi,
-            ),
+            'penerimaanNonSppSaja' => $penerimaanNonSppSaja,
+            'adaTransaksiDapatDiunggah' => $tagihanSpp->contains(function ($tagihan): bool {
+                $pembayaran = $tagihan->detailPembayaran->first()?->pembayaran;
+                $arsip = $pembayaran?->penerimaan?->arsipKwitansi ?? $pembayaran?->arsipKwitansi;
+
+                return $pembayaran && ! $arsip;
+            }) || $penerimaanNonSppSaja->contains(fn ($penerimaan) => ! $penerimaan->arsipKwitansi),
         ]);
     }
 
@@ -56,29 +68,43 @@ class SiswaPortalController extends Controller
         /** @var Siswa $siswa */
         $siswa = $request->user('siswa')->siswa;
         $idPembayaran = $request->validated('id_pembayaran');
+        $idPenerimaan = $request->validated('id_penerimaan');
         $dataFoto = null;
 
         try {
             DB::transaction(function () use (
                 $siswa,
                 $idPembayaran,
+                $idPenerimaan,
                 $request,
                 $kompresiFotoKwitansiService,
                 &$dataFoto,
             ): void {
-                $pembayaran = $siswa->pembayaran()
-                    ->whereKey($idPembayaran)
-                    ->where('status', 'aktif')
-                    ->lockForUpdate()
-                    ->first();
+                $pembayaran = null;
+                $penerimaan = null;
 
-                if (! $pembayaran) {
+                if ($idPenerimaan) {
+                    $penerimaan = $siswa->penerimaan()
+                        ->whereKey($idPenerimaan)
+                        ->where('status', 'aktif')
+                        ->lockForUpdate()
+                        ->first();
+                } else {
+                    $pembayaran = $siswa->pembayaran()
+                        ->whereKey($idPembayaran)
+                        ->where('status', 'aktif')
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (! $pembayaran && ! $penerimaan) {
                     throw ValidationException::withMessages([
-                        'id_pembayaran' => 'Transaksi pembayaran aktif tidak ditemukan untuk siswa ini.',
+                        'id_pembayaran' => 'Kwitansi aktif tidak ditemukan untuk siswa ini.',
                     ]);
                 }
 
-                if ($pembayaran->arsipKwitansi()->exists()) {
+                $relasiArsip = $penerimaan?->arsipKwitansi() ?? $pembayaran->arsipKwitansi();
+                if ($relasiArsip->exists()) {
                     throw ValidationException::withMessages([
                         'id_pembayaran' => 'Foto kwitansi untuk transaksi ini sudah diunggah.',
                     ]);
@@ -88,7 +114,8 @@ class SiswaPortalController extends Controller
 
                 ArsipKwitansiSiswa::create([
                     'id_siswa' => $siswa->id_siswa,
-                    'id_pembayaran' => $pembayaran->id_pembayaran,
+                    'id_pembayaran' => $pembayaran?->id_pembayaran,
+                    'id_penerimaan' => $penerimaan?->id_penerimaan,
                     ...$dataFoto,
                 ]);
             });
@@ -110,6 +137,7 @@ class SiswaPortalController extends Controller
         /** @var Siswa $siswa */
         $siswa = $request->user('siswa')->siswa;
         $idPembayaran = $request->validated('id_pembayaran');
+        $idPenerimaan = $request->validated('id_penerimaan');
         $dataFoto = null;
         $pathLama = null;
 
@@ -117,24 +145,38 @@ class SiswaPortalController extends Controller
             DB::transaction(function () use (
                 $siswa,
                 $idPembayaran,
+                $idPenerimaan,
                 $request,
                 $kompresiFotoKwitansiService,
                 &$dataFoto,
                 &$pathLama,
             ): void {
-                $pembayaran = $siswa->pembayaran()
-                    ->whereKey($idPembayaran)
-                    ->where('status', 'aktif')
-                    ->lockForUpdate()
-                    ->first();
+                $pembayaran = null;
+                $penerimaan = null;
 
-                if (! $pembayaran) {
+                if ($idPenerimaan) {
+                    $penerimaan = $siswa->penerimaan()
+                        ->whereKey($idPenerimaan)
+                        ->where('status', 'aktif')
+                        ->lockForUpdate()
+                        ->first();
+                } else {
+                    $pembayaran = $siswa->pembayaran()
+                        ->whereKey($idPembayaran)
+                        ->where('status', 'aktif')
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (! $pembayaran && ! $penerimaan) {
                     throw ValidationException::withMessages([
                         'id_pembayaran' => 'Transaksi pembayaran aktif tidak ditemukan untuk siswa ini.',
                     ]);
                 }
 
-                $arsip = $pembayaran->arsipKwitansi()->lockForUpdate()->first();
+                $arsip = ($penerimaan?->arsipKwitansi() ?? $pembayaran->arsipKwitansi())
+                    ->lockForUpdate()
+                    ->first();
 
                 if (! $arsip) {
                     throw ValidationException::withMessages([

@@ -24,7 +24,11 @@ class AuthenticationTest extends TestCase
             $this->post(route('login.attempt'), [
                 'username' => $user->username,
                 'password' => 'rahasia',
-            ])->assertRedirect(route('home'));
+            ])->assertRedirect(route(match ($role) {
+                User::ROLE_ADMIN => 'admin.dashboard',
+                User::ROLE_TU => 'tu.dashboard',
+                User::ROLE_KEPALA_SEKOLAH => 'kepsek.dashboard',
+            }));
 
             $this->assertAuthenticatedAs($user, 'web');
             $this->post(route('logout'))->assertRedirect(route('login'));
@@ -105,23 +109,16 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_legacy_login_shows_role_pages_and_portal_login_can_switch_accounts(): void
+    public function test_authenticated_internal_user_is_redirected_to_their_dashboard_from_login(): void
     {
-        $user = User::factory()->create(['nama' => 'Petugas Aktif']);
+        $user = User::factory()->tu()->create(['nama' => 'Petugas Aktif']);
 
         $this->actingAs($user)
             ->get(route('login'))
-            ->assertOk()
-            ->assertSeeText(['Login Admin', 'Login TU', 'Login Kepala Sekolah'])
-            ->assertDontSee('name="password"', false);
+            ->assertRedirect(route('tu.dashboard'));
 
-        $this->actingAs($user, 'tu')
-            ->get(route('portal.tu.login'))
-            ->assertRedirect(route('portal.tu.home'));
-
-        $this->get(route('portal.tu.login', ['switch' => 1]))
-            ->assertOk()
-            ->assertSeeText(['Login Internal', 'Akun aktif:', 'Petugas Aktif', 'Tata Usaha']);
+        $this->get(route('portal.tu.login'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_authentication_pages_are_not_cached_by_the_browser(): void
@@ -130,8 +127,8 @@ class AuthenticationTest extends TestCase
 
         $this->assertStringContainsString('no-store', (string) $loginResponse->headers->get('Cache-Control'));
 
-        $user = User::factory()->create();
-        $dashboardResponse = $this->actingAs($user)->get(route('home'));
+        $user = User::factory()->tu()->create();
+        $dashboardResponse = $this->actingAs($user)->get(route('tu.dashboard'));
 
         $dashboardResponse->assertOk();
         $this->assertStringContainsString('no-store', (string) $dashboardResponse->headers->get('Cache-Control'));

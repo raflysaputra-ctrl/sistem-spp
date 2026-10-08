@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Pembayaran;
+use App\Models\Penerimaan;
 use App\Models\Siswa;
 use App\Models\User;
 use Carbon\Carbon;
@@ -37,10 +38,10 @@ class DashboardTest extends TestCase
                 'Pencarian Cepat',
                 'Status Pembayaran SPP',
                 'Riwayat Pembayaran',
-                'Rekap Pembayaran',
+                'Rekap Penerimaan',
             ])
-            ->assertSee(route('pembayaran.index'), false)
-            ->assertSee(route('riwayat-pembayaran.index'), false)
+            ->assertSee(route('penerimaan.index'), false)
+            ->assertSee(route('penerimaan.riwayat'), false)
             ->assertSee(route('rekap-pembayaran.index'), false);
     }
 
@@ -59,7 +60,7 @@ class DashboardTest extends TestCase
                 'Kontrol Sistem',
                 'Kelola Data Siswa',
                 'Tinjau Pembatalan Transaksi',
-                'Lihat Rekap Pembayaran',
+                'Lihat Rekap Penerimaan',
             ])
             ->assertDontSee('href="'.route('pembayaran.index').'"', false)
             ->assertDontSee('href="'.route('status-spp.index').'"', false);
@@ -100,7 +101,7 @@ class DashboardTest extends TestCase
                 'status_siswa' => 'aktif',
             ]);
 
-            Pembayaran::query()->create([
+            Penerimaan::query()->create([
                 'no_kwitansi' => 'KWT-CHART-001',
                 'id_siswa' => $siswa->id_siswa,
                 'id_user' => $user->id_user,
@@ -140,7 +141,7 @@ class DashboardTest extends TestCase
                 'angkatan' => 2026,
                 'status_siswa' => 'aktif',
             ]);
-            Pembayaran::query()->create([
+            Penerimaan::query()->create([
                 'no_kwitansi' => 'KWT-AKTIF-001',
                 'id_siswa' => $siswa->id_siswa,
                 'id_user' => $user->id_user,
@@ -148,7 +149,7 @@ class DashboardTest extends TestCase
                 'total_bayar' => 150000,
                 'status' => 'aktif',
             ]);
-            Pembayaran::query()->create([
+            Penerimaan::query()->create([
                 'no_kwitansi' => 'KWT-BATAL-001',
                 'id_siswa' => $siswa->id_siswa,
                 'id_user' => $user->id_user,
@@ -167,6 +168,38 @@ class DashboardTest extends TestCase
                 ->assertViewHas('jumlahTransaksiHariIni', 1)
                 ->assertViewHas('totalPenerimaanBulanIni', 150000)
                 ->assertDontSee('KWT-BATAL-001');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_dashboard_hides_legacy_payments_without_a_unified_receipt(): void
+    {
+        Carbon::setTestNow('2026-09-04 10:00:00');
+
+        try {
+            $user = User::factory()->tu()->create();
+            $siswa = Siswa::query()->create([
+                'nipd' => '20260003',
+                'nama_siswa' => 'Siswa Transaksi Lama',
+                'jenis_kelamin' => 'L',
+                'angkatan' => 2026,
+                'status_siswa' => 'aktif',
+            ]);
+            Pembayaran::query()->create([
+                'no_kwitansi' => 'KWT-LEGACY-001',
+                'id_siswa' => $siswa->id_siswa,
+                'id_user' => $user->id_user,
+                'tanggal_bayar' => now(),
+                'total_bayar' => 150_000,
+                'status' => 'aktif',
+            ]);
+
+            $this->actingAs($user)->get(route('tu.dashboard'))
+                ->assertOk()
+                ->assertViewHas('jumlahTransaksiHariIni', 0)
+                ->assertViewHas('totalPenerimaanBulanIni', 0)
+                ->assertDontSee('KWT-LEGACY-001');
         } finally {
             Carbon::setTestNow();
         }

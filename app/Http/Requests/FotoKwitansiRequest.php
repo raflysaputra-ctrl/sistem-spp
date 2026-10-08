@@ -14,7 +14,8 @@ class FotoKwitansiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_pembayaran' => ['required', 'integer'],
+            'id_pembayaran' => ['nullable', 'required_without:id_penerimaan', 'integer'],
+            'id_penerimaan' => ['nullable', 'required_without:id_pembayaran', 'integer'],
             'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }

@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             TahunAjaranSeeder::class,
             KelasSeeder::class,
             TarifSppSeeder::class,
+            JenisPembayaranSeeder::class,
+            KategoriPengeluaranSeeder::class,
         ]);
     }
 }

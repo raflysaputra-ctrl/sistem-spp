@@ -1,21 +1,28 @@
 <?php
 
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\AkunSiswaController;
 use App\Http\Controllers\ArsipKwitansiSiswaController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\SiswaAuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KenaikanKelasController;
 use App\Http\Controllers\LaporanTunggakanController;
+use App\Http\Controllers\MasterData\JenisPembayaranController;
 use App\Http\Controllers\MasterData\JurusanController;
+use App\Http\Controllers\MasterData\KategoriPengeluaranController;
 use App\Http\Controllers\MasterData\KelasController;
 use App\Http\Controllers\MasterData\SiswaController;
+use App\Http\Controllers\MasterData\TagihanNonSppBatchController;
 use App\Http\Controllers\MasterData\TahunAjaranController;
 use App\Http\Controllers\MasterData\TarifSppController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\PembayaranNonSppController;
+use App\Http\Controllers\PenerimaanController;
+use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\RekapPembayaranController;
 use App\Http\Controllers\RiwayatPembayaranController;
+use App\Http\Controllers\RiwayatPembayaranNonSppController;
+use App\Http\Controllers\SiswaAccountController;
 use App\Http\Controllers\SiswaPortalController;
 use App\Http\Controllers\StatusSppController;
 use App\Http\Controllers\WaliPortalController;
@@ -33,6 +40,7 @@ Route::get('/', function () {
             default => redirect('/login'),
         };
     }
+
     return redirect('/login');
 })->name('home');
 
@@ -55,15 +63,15 @@ Route::get('/tu', fn () => redirect('/tu/dashboard'));
 Route::get('/kepsek', fn () => redirect('/kepsek/dashboard'));
 
 Route::get('/admin/dashboard', [DashboardController::class, 'admin'])
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'role:admin', 'cache.headers:no_store;no_cache;must_revalidate;max_age=0'])
     ->name('admin.dashboard');
 
 Route::get('/tu/dashboard', [DashboardController::class, 'tu'])
-    ->middleware(['auth', 'role:tu'])
+    ->middleware(['auth', 'role:tu', 'cache.headers:no_store;no_cache;must_revalidate;max_age=0'])
     ->name('tu.dashboard');
 
 Route::get('/kepsek/dashboard', [DashboardController::class, 'kepsek'])
-    ->middleware(['auth', 'role:kepala_sekolah'])
+    ->middleware(['auth', 'role:kepala_sekolah', 'cache.headers:no_store;no_cache;must_revalidate;max_age=0'])
     ->name('kepsek.dashboard');
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
@@ -80,12 +88,33 @@ Route::middleware(['auth', 'role:admin|tu', 'cache.headers:no_store;no_cache;mus
     Route::get('/pembayaran/kwitansi/{pembayaran}', [PembayaranController::class, 'showKwitansi'])->name('pembayaran.kwitansi.show');
     Route::get('/riwayat-pembayaran', [RiwayatPembayaranController::class, 'index'])->name('riwayat-pembayaran.index');
     Route::get('/riwayat-pembayaran/{pembayaran}', [RiwayatPembayaranController::class, 'show'])->name('riwayat-pembayaran.show');
+
+    Route::get('/pembayaran-non-spp/kwitansi/{pembayaranNonSpp}', [PembayaranNonSppController::class, 'kwitansi'])->name('pembayaran-non-spp.kwitansi');
+    Route::get('/riwayat-pembayaran-non-spp', [RiwayatPembayaranNonSppController::class, 'index'])->name('riwayat-pembayaran-non-spp.index');
+    Route::get('/riwayat-pembayaran-non-spp/{pembayaranNonSpp}', [RiwayatPembayaranNonSppController::class, 'show'])->name('riwayat-pembayaran-non-spp.show');
+    Route::get('/penerimaan/kwitansi/{penerimaan}', [PenerimaanController::class, 'kwitansi'])->name('penerimaan.kwitansi');
+    Route::get('/riwayat-penerimaan', [PenerimaanController::class, 'riwayat'])->name('penerimaan.riwayat');
+    Route::get('/riwayat-penerimaan/{penerimaan}', [PenerimaanController::class, 'detail'])->name('penerimaan.detail');
+    Route::get('/riwayat-pengeluaran', [PengeluaranController::class, 'riwayat'])->name('pengeluaran.riwayat');
+    Route::get('/riwayat-pengeluaran/{pengeluaran}', [PengeluaranController::class, 'detail'])->name('pengeluaran.detail');
 });
 
 Route::middleware(['auth', 'role:tu', 'cache.headers:no_store;no_cache;must_revalidate;max_age=0'])->group(function () {
     Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
     Route::get('/pembayaran/{siswa}', [PembayaranController::class, 'show'])->name('pembayaran.show');
     Route::post('/pembayaran/{siswa}', [PembayaranController::class, 'store'])->name('pembayaran.store');
+
+    Route::get('/pembayaran-non-spp', [PembayaranNonSppController::class, 'index'])->name('pembayaran-non-spp.index');
+    Route::get('/pembayaran-non-spp/{siswa}', [PembayaranNonSppController::class, 'show'])->name('pembayaran-non-spp.show');
+    Route::post('/pembayaran-non-spp/{siswa}', [PembayaranNonSppController::class, 'store'])->name('pembayaran-non-spp.store');
+
+    Route::get('/penerimaan', [PenerimaanController::class, 'index'])->name('penerimaan.index');
+    Route::get('/penerimaan/{siswa}', [PenerimaanController::class, 'show'])->name('penerimaan.show');
+    Route::post('/penerimaan/{siswa}', [PenerimaanController::class, 'store'])->name('penerimaan.store');
+
+    Route::get('/pengeluaran', [PengeluaranController::class, 'index'])->name('pengeluaran.index');
+    Route::post('/pengeluaran', [PengeluaranController::class, 'store'])->name('pengeluaran.store');
+
     Route::get('/laporan-tunggakan', [LaporanTunggakanController::class, 'index'])->name('laporan-tunggakan.index');
     Route::get('/laporan-tunggakan/export/excel', [LaporanTunggakanController::class, 'exportExcel'])->name('laporan-tunggakan.export.excel');
     Route::get('/laporan-tunggakan/export/pdf', [LaporanTunggakanController::class, 'exportPdf'])->name('laporan-tunggakan.export.pdf');
@@ -97,6 +126,9 @@ Route::middleware(['auth', 'role:tu', 'cache.headers:no_store;no_cache;must_reva
 
 Route::middleware(['auth', 'role:admin', 'cache.headers:no_store;no_cache;must_revalidate;max_age=0'])->group(function () {
     Route::patch('/riwayat-pembayaran/{pembayaran}/batalkan', [RiwayatPembayaranController::class, 'batalkan'])->name('riwayat-pembayaran.batalkan');
+    Route::patch('/riwayat-pembayaran-non-spp/{pembayaranNonSpp}/batalkan', [RiwayatPembayaranNonSppController::class, 'batalkan'])->name('riwayat-pembayaran-non-spp.batalkan');
+    Route::patch('/riwayat-penerimaan/{penerimaan}/batalkan', [PenerimaanController::class, 'batalkan'])->name('penerimaan.batalkan');
+    Route::patch('/riwayat-pengeluaran/{pengeluaran}/batalkan', [PengeluaranController::class, 'batalkan'])->name('pengeluaran.batalkan');
     Route::get('/kenaikan-kelas/preview', [KenaikanKelasController::class, 'preview'])->name('kenaikan-kelas.preview');
     Route::post('/kenaikan-kelas/proses', [KenaikanKelasController::class, 'proses'])->name('kenaikan-kelas.proses');
 
@@ -111,16 +143,16 @@ Route::middleware(['auth', 'role:admin', 'cache.headers:no_store;no_cache;must_r
     });
 
     Route::prefix('accounts/siswa')->name('admin.accounts.siswa.')->group(function () {
-        Route::get('/import', [\App\Http\Controllers\SiswaAccountController::class, 'importForm'])->name('import');
-        Route::post('/import', [\App\Http\Controllers\SiswaAccountController::class, 'importSiswa'])->name('import.store');
-        Route::get('/', [\App\Http\Controllers\SiswaAccountController::class, 'index'])->name('index');
-        Route::get('/create/{siswa}', [\App\Http\Controllers\SiswaAccountController::class, 'create'])->name('create');
-        Route::post('/{siswa}', [\App\Http\Controllers\SiswaAccountController::class, 'store'])->name('store');
-        Route::get('/{user}/edit', [\App\Http\Controllers\SiswaAccountController::class, 'edit'])->name('edit');
-        Route::put('/{user}', [\App\Http\Controllers\SiswaAccountController::class, 'update'])->name('update');
-        Route::post('/{user}/sync-username', [\App\Http\Controllers\SiswaAccountController::class, 'syncUsername'])->name('syncUsername');
-        Route::post('/{user}/toggle', [\App\Http\Controllers\SiswaAccountController::class, 'toggleActive'])->name('toggle');
-        Route::delete('/{user}', [\App\Http\Controllers\SiswaAccountController::class, 'destroy'])->name('destroy');
+        Route::get('/import', [SiswaAccountController::class, 'importForm'])->name('import');
+        Route::post('/import', [SiswaAccountController::class, 'importSiswa'])->name('import.store');
+        Route::get('/', [SiswaAccountController::class, 'index'])->name('index');
+        Route::get('/create/{siswa}', [SiswaAccountController::class, 'create'])->name('create');
+        Route::post('/{siswa}', [SiswaAccountController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [SiswaAccountController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [SiswaAccountController::class, 'update'])->name('update');
+        Route::post('/{user}/sync-username', [SiswaAccountController::class, 'syncUsername'])->name('syncUsername');
+        Route::post('/{user}/toggle', [SiswaAccountController::class, 'toggleActive'])->name('toggle');
+        Route::delete('/{user}', [SiswaAccountController::class, 'destroy'])->name('destroy');
     });
 
     Route::get('/master-data/siswa/{siswa}/akun', function ($siswa) {
@@ -164,6 +196,25 @@ Route::middleware(['auth', 'role:admin', 'cache.headers:no_store;no_cache;must_r
         Route::post('/tarif-spp', [TarifSppController::class, 'store'])->name('tarif-spp.store');
         Route::get('/tarif-spp/{tarifSpp}/edit', [TarifSppController::class, 'edit'])->name('tarif-spp.edit');
         Route::put('/tarif-spp/{tarifSpp}', [TarifSppController::class, 'update'])->name('tarif-spp.update');
+
+        Route::get('/jenis-pembayaran', [JenisPembayaranController::class, 'index'])->name('jenis-pembayaran.index');
+        Route::get('/jenis-pembayaran/create', [JenisPembayaranController::class, 'create'])->name('jenis-pembayaran.create');
+        Route::post('/jenis-pembayaran', [JenisPembayaranController::class, 'store'])->name('jenis-pembayaran.store');
+        Route::get('/jenis-pembayaran/{jenisPembayaran}/edit', [JenisPembayaranController::class, 'edit'])->name('jenis-pembayaran.edit');
+        Route::put('/jenis-pembayaran/{jenisPembayaran}', [JenisPembayaranController::class, 'update'])->name('jenis-pembayaran.update');
+        Route::delete('/jenis-pembayaran/{jenisPembayaran}', [JenisPembayaranController::class, 'destroy'])->name('jenis-pembayaran.destroy');
+
+        Route::get('/kategori-pengeluaran', [KategoriPengeluaranController::class, 'index'])->name('kategori-pengeluaran.index');
+        Route::post('/kategori-pengeluaran', [KategoriPengeluaranController::class, 'store'])->name('kategori-pengeluaran.store');
+        Route::get('/kategori-pengeluaran/{kategoriPengeluaran}/edit', [KategoriPengeluaranController::class, 'edit'])->name('kategori-pengeluaran.edit');
+        Route::put('/kategori-pengeluaran/{kategoriPengeluaran}', [KategoriPengeluaranController::class, 'update'])->name('kategori-pengeluaran.update');
+        Route::patch('/kategori-pengeluaran/{kategoriPengeluaran}/toggle', [KategoriPengeluaranController::class, 'toggle'])->name('kategori-pengeluaran.toggle');
+
+        Route::get('/tagihan-non-spp', [TagihanNonSppBatchController::class, 'index'])->name('tagihan-non-spp.index');
+        Route::get('/tagihan-non-spp/create', [TagihanNonSppBatchController::class, 'create'])->name('tagihan-non-spp.create');
+        Route::post('/tagihan-non-spp', [TagihanNonSppBatchController::class, 'store'])->name('tagihan-non-spp.store');
+        Route::get('/tagihan-non-spp/detail', [TagihanNonSppBatchController::class, 'detail'])->name('tagihan-non-spp.detail');
+        Route::patch('/tagihan-non-spp/{siswa}/gelombang-bam', [TagihanNonSppBatchController::class, 'koreksiGelombangBam'])->name('tagihan-non-spp.gelombang-bam.koreksi');
     });
 });
 

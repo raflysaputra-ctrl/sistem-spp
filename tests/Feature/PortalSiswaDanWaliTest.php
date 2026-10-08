@@ -80,29 +80,28 @@ class PortalSiswaDanWaliTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->post(route('master.siswa.akun.store', $siswa), [
-                'username' => 'siswa.portal',
+            ->post(route('admin.accounts.siswa.store', $siswa), [
                 'password' => 'password-baru',
                 'password_confirmation' => 'password-baru',
             ])
-            ->assertRedirect(route('master.siswa.akun.show', $siswa));
+            ->assertRedirect(route('admin.accounts.siswa.index'));
 
-        $akunSiswa = User::query()->where('username', 'siswa.portal')->firstOrFail();
+        $akunSiswa = User::query()->where('username', $siswa->nipd)->firstOrFail();
         $this->assertSame('siswa', $akunSiswa->role);
         $this->assertSame($siswa->id_siswa, $akunSiswa->id_siswa);
         $this->assertTrue(Hash::check('password-baru', $akunSiswa->password));
 
         $this->actingAs($admin)
-            ->patch(route('master.siswa.akun.password', $siswa), [
+            ->put(route('admin.accounts.siswa.update', $akunSiswa), [
                 'password' => 'password-reset',
                 'password_confirmation' => 'password-reset',
             ])
-            ->assertRedirect(route('master.siswa.akun.show', $siswa));
+            ->assertRedirect(route('admin.accounts.siswa.index'));
         $this->assertTrue(Hash::check('password-reset', $akunSiswa->fresh()->password));
 
         $this->post(route('logout'));
         $this->post(route('siswa.login.attempt'), [
-            'username' => 'siswa.portal',
+            'username' => $siswa->nipd,
             'password' => 'password-reset',
         ])->assertRedirect(route('siswa.status'));
         $this->assertAuthenticatedAs($akunSiswa, 'siswa');

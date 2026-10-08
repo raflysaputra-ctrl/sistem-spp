@@ -55,4 +55,19 @@ class Siswa extends Model
     {
         return $this->hasMany(ArsipKwitansiSiswa::class, 'id_siswa', 'id_siswa');
     }
+
+    public function tagihanNonSpp(): HasMany
+    {
+        return $this->hasMany(TagihanPembayaran::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function penerimaan(): HasMany
+    {
+        return $this->hasMany(Penerimaan::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function penetapanGelombangBam(): HasMany
+    {
+        return $this->hasMany(PenetapanGelombangBam::class, 'id_siswa', 'id_siswa');
+    }
 }

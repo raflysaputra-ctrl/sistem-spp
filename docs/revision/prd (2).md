@@ -307,6 +307,24 @@ Jangan implementasikan flow final UJIKOM sebelum requirement tersebut dikonfirma
 
 Daftar jenis pembayaran lain serta aturan masing-masing: **TBD**.
 
+### 8.4 Keputusan R3 Penerimaan Non-SPP
+
+Keputusan berikut telah dikonfirmasi untuk increment R3:
+
+- jenis awal adalah PTS, PAS, PKL, UJIKOM, dan Biaya Awal Masuk;
+- Admin membuat tagihan secara massal untuk satu jenis pembayaran; seluruh periode jenis tersebut diisi dalam satu form/proses;
+- nominal dan minimal DP disimpan pada tagihan, bukan di-hardcode pada source code;
+- PTS/PAS wajib lunas dalam satu transaksi;
+- PKL, UJIKOM, dan Biaya Awal Masuk dapat dicicil sesuai minimal DP yang tercatat pada tagihan;
+- periode tagihan harus terstruktur: semester untuk PTS/PAS, gelombang untuk Biaya Awal Masuk, dan tahunan untuk PKL/UJIKOM;
+- satu kwitansi dapat mencatat beberapa tagihan non-SPP milik satu siswa;
+- kwitansi non-SPP tidak mencampur tagihan SPP;
+- pembatalan seluruh kwitansi non-SPP hanya oleh Admin, dengan alasan, pengguna pembatal, dan waktu pembatalan;
+- pembatalan kwitansi cicilan ditolak bila menyisakan pembayaran aktif lebih dari nol tetapi kurang dari minimal DP pada tagihan;
+- target rekap adalah satu Rekap Penerimaan yang dapat membedakan SPP dan non-SPP.
+
+Hal yang tetap TBD: nominal/DP Biaya Awal Masuk Gelombang 2/3, Portal Siswa/Wali, foto kwitansi non-SPP, serta bentuk final export Rekap Penerimaan.
+
 ---
 
 ## 9. Pengeluaran

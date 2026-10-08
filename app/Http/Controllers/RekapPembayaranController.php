@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DetailPembayaran;
 use App\Models\Jurusan;
 use App\Models\Pembayaran;
+use App\Models\PembayaranNonSpp;
 use App\Models\TagihanSpp;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,17 +19,31 @@ class RekapPembayaranController extends Controller
     public function index(Request $request): View
     {
         $filters = $this->validatedFilters($request);
-        $query = $this->filteredQuery($filters);
+        $tampilkanSpp = $filters['sumber'] !== 'non_spp';
+        $tampilkanNonSpp = $filters['sumber'] !== 'spp';
+        $querySpp = $this->filteredQuery($filters);
+        $queryNonSpp = $this->filteredNonSppQuery($filters);
+        $ringkasanSpp = $tampilkanSpp ? $this->ringkasan($querySpp) : $this->ringkasanKosong();
+        $ringkasanNonSpp = $tampilkanNonSpp ? $this->ringkasanNonSpp($queryNonSpp) : $this->ringkasanKosong();
 
-        $ringkasan = $this->ringkasan($query);
+        $rekapPembayaran = $tampilkanSpp
+            ? $this->orderedQuery($querySpp)->paginate(20, ['*'], 'spp_page')->withQueryString()
+            : null;
+        $rekapPembayaranNonSpp = $tampilkanNonSpp
+            ? $this->orderedNonSppQuery($queryNonSpp)->paginate(20, ['*'], 'non_spp_page')->withQueryString()
+            : null;
 
         return view('rekap-pembayaran.index', [
             'filters' => $filters,
             'jurusan' => Jurusan::query()->orderBy('nama_jurusan')->get(),
             'tahunTersedia' => TagihanSpp::query()->select('tahun')->distinct()->orderByDesc('tahun')->pluck('tahun'),
-            'rekapPembayaran' => $this->orderedQuery($query)->paginate(20)
-                ->withQueryString(),
-            'ringkasan' => $ringkasan,
+            'tampilkanSpp' => $tampilkanSpp,
+            'tampilkanNonSpp' => $tampilkanNonSpp,
+            'rekapPembayaran' => $rekapPembayaran,
+            'rekapPembayaranNonSpp' => $rekapPembayaranNonSpp,
+            'ringkasan' => $this->gabungkanRingkasan($ringkasanSpp, $ringkasanNonSpp),
+            'ringkasanSpp' => $ringkasanSpp,
+            'ringkasanNonSpp' => $ringkasanNonSpp,
         ]);
     }
 
@@ -71,7 +86,7 @@ class RekapPembayaranController extends Controller
 
                 echo '<Row>'
                     .$this->excelCell($pembayaran->tanggal_bayar->format('d/m/Y H:i'), 'String', 'border')
-                    .$this->excelCell($pembayaran->no_kwitansi, 'String', 'border')
+                    .$this->excelCell($pembayaran->penerimaan?->no_kwitansi ?? $pembayaran->no_kwitansi, 'String', 'border')
                     .$this->excelCell($pembayaran->siswa->nipd, 'String', 'border')
                     .$this->excelCell($pembayaran->siswa->nama_siswa, 'String', 'border')
                     .$this->excelCell($tagihan->siswaKelas->kelas->nama_kelas, 'String', 'border')
@@ -108,6 +123,7 @@ class RekapPembayaranController extends Controller
     private function validatedFilters(Request $request): array
     {
         $filters = $request->validate([
+            'sumber' => ['nullable', 'in:semua,spp,non_spp'],
             'bulan' => ['nullable', 'integer', 'between:1,12'],
             'tahun' => ['nullable', 'integer', 'between:1900,9999'],
             'id_jurusan' => ['nullable', 'integer', 'exists:jurusan,id_jurusan'],
@@ -126,6 +142,12 @@ class RekapPembayaranController extends Controller
         }
 
         $filters['status'] = $filters['status'] ?? 'aktif';
+        $filters['sumber'] = $filters['sumber'] ?? (
+            collect(['bulan', 'tahun', 'id_jurusan', 'tingkat', 'rombel'])
+                ->contains(fn (string $filter) => $request->filled($filter))
+                ? 'spp'
+                : 'semua'
+        );
 
         return $filters;
     }
@@ -139,6 +161,7 @@ class RekapPembayaranController extends Controller
             ->with([
                 'pembayaran.siswa',
                 'pembayaran.user',
+                'pembayaran.penerimaan',
                 'tagihanSpp.siswaKelas.kelas.jurusan',
             ])
             ->when($filters['bulan'] ?? null, fn (Builder $query, int $bulan) => $query->whereHas(
@@ -162,9 +185,11 @@ class RekapPembayaranController extends Controller
                 fn (Builder $query) => $query->where('status', $filters['status']),
             ))
             ->when($filters['cari'] ?? null, function (Builder $query, string $cari) {
-                $query->whereHas('pembayaran.siswa', function (Builder $query) use ($cari) {
-                    $query->where('nipd', 'like', "%{$cari}%")
-                        ->orWhere('nama_siswa', 'like', "%{$cari}%");
+                $query->where(function (Builder $query) use ($cari) {
+                    $query->whereHas('pembayaran.siswa', function (Builder $query) use ($cari) {
+                        $query->where('nipd', 'like', "%{$cari}%")
+                            ->orWhere('nama_siswa', 'like', "%{$cari}%");
+                    })->orWhereHas('pembayaran.penerimaan', fn (Builder $query) => $query->where('no_kwitansi', 'like', "%{$cari}%"));
                 });
             })
             ->when(
@@ -178,6 +203,34 @@ class RekapPembayaranController extends Controller
                     });
                 },
             );
+    }
+
+    /**
+     * @param  array<string, int|string>  $filters
+     */
+    private function filteredNonSppQuery(array $filters): Builder
+    {
+        return PembayaranNonSpp::query()
+            ->with([
+                'siswa',
+                'user',
+                'penerimaan',
+                'detailPembayaranNonSpp.tagihanPembayaran.jenisPembayaran',
+                'detailPembayaranNonSpp.tagihanPembayaran.tahunAjaran',
+            ])
+            ->when($filters['tanggal_mulai'] ?? null, fn (Builder $query, string $tanggal) => $query->whereDate('tanggal_bayar', '>=', $tanggal))
+            ->when($filters['tanggal_selesai'] ?? null, fn (Builder $query, string $tanggal) => $query->whereDate('tanggal_bayar', '<=', $tanggal))
+            ->when($filters['status'] !== 'semua', fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when($filters['cari'] ?? null, function (Builder $query, string $cari) {
+                $query->where(function (Builder $query) use ($cari) {
+                    $query->where('no_kwitansi', 'like', "%{$cari}%")
+                        ->orWhereHas('penerimaan', fn (Builder $query) => $query->where('no_kwitansi', 'like', "%{$cari}%"))
+                        ->orWhereHas('siswa', function (Builder $query) use ($cari) {
+                            $query->where('nipd', 'like', "%{$cari}%")
+                                ->orWhere('nama_siswa', 'like', "%{$cari}%");
+                        });
+                });
+            });
     }
 
     /**
@@ -196,6 +249,50 @@ class RekapPembayaranController extends Controller
         ];
     }
 
+    /**
+     * @return array{jumlah_transaksi_aktif: int, total_aktif: int|float|string, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int|float|string}
+     */
+    private function ringkasanNonSpp(Builder $query): array
+    {
+        $aktif = (clone $query)->where('status', 'aktif');
+        $dibatalkan = (clone $query)->where('status', 'dibatalkan');
+
+        return [
+            'jumlah_transaksi_aktif' => (clone $aktif)->count('id_pembayaran_non_spp'),
+            'total_aktif' => (clone $aktif)->sum('nominal_bayar'),
+            'jumlah_transaksi_dibatalkan' => (clone $dibatalkan)->count('id_pembayaran_non_spp'),
+            'total_dibatalkan' => (clone $dibatalkan)->sum('nominal_bayar'),
+        ];
+    }
+
+    /**
+     * @return array{jumlah_transaksi_aktif: int, total_aktif: int, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int}
+     */
+    private function ringkasanKosong(): array
+    {
+        return [
+            'jumlah_transaksi_aktif' => 0,
+            'total_aktif' => 0,
+            'jumlah_transaksi_dibatalkan' => 0,
+            'total_dibatalkan' => 0,
+        ];
+    }
+
+    /**
+     * @param  array{jumlah_transaksi_aktif: int, total_aktif: int|float|string, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int|float|string}  $ringkasanSpp
+     * @param  array{jumlah_transaksi_aktif: int, total_aktif: int|float|string, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int|float|string}  $ringkasanNonSpp
+     * @return array{jumlah_transaksi_aktif: int, total_aktif: int, jumlah_transaksi_dibatalkan: int, total_dibatalkan: int}
+     */
+    private function gabungkanRingkasan(array $ringkasanSpp, array $ringkasanNonSpp): array
+    {
+        return [
+            'jumlah_transaksi_aktif' => $ringkasanSpp['jumlah_transaksi_aktif'] + $ringkasanNonSpp['jumlah_transaksi_aktif'],
+            'total_aktif' => (int) $ringkasanSpp['total_aktif'] + (int) $ringkasanNonSpp['total_aktif'],
+            'jumlah_transaksi_dibatalkan' => $ringkasanSpp['jumlah_transaksi_dibatalkan'] + $ringkasanNonSpp['jumlah_transaksi_dibatalkan'],
+            'total_dibatalkan' => (int) $ringkasanSpp['total_dibatalkan'] + (int) $ringkasanNonSpp['total_dibatalkan'],
+        ];
+    }
+
     private function orderedQuery(Builder $query): Builder
     {
         return $query->orderByDesc(
@@ -203,6 +300,13 @@ class RekapPembayaranController extends Controller
                 ->select('tanggal_bayar')
                 ->whereColumn('pembayaran.id_pembayaran', 'detail_pembayaran.id_pembayaran'),
         );
+    }
+
+    private function orderedNonSppQuery(Builder $query): Builder
+    {
+        return $query
+            ->orderByDesc('tanggal_bayar')
+            ->orderByDesc('id_pembayaran_non_spp');
     }
 
     private function excelCell(string|int $value, string $type = 'String', ?string $style = null): string

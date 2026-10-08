@@ -210,6 +210,9 @@
         .data-table td { padding: .9rem 1rem; border-bottom: 1px solid #e0e3e5; color: #191c1e; vertical-align: middle; }
         .data-table tbody tr:last-child td { border-bottom: 0; }
         .data-table tbody tr:hover { background: rgb(221 225 255 / 30%); }
+        .payment-nominal { display: block; min-width: 10rem; min-height: 2.5rem; width: 100%; padding: .55rem .65rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; color: #191c1e; font: inherit; font-size: .9rem; }
+        .payment-nominal:focus { outline: 0; border-color: #00288e; box-shadow: 0 0 0 2px rgb(0 40 142 / 18%); }
+        .payment-nominal[readonly] { background: #f2f4f6; color: #757684; cursor: not-allowed; }
         .tarif-input { min-height: 2.5rem; width: 100%; padding: .55rem .65rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; color: #191c1e; font: inherit; font-size: .9rem; }
         .tarif-input:focus { outline: 0; border-color: #00288e; box-shadow: 0 0 0 2px rgb(0 40 142 / 18%); }
         .file-picker { display: flex; align-items: center; min-height: 2.75rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; overflow: hidden; }
@@ -238,6 +241,8 @@
         .filter-field { display: grid; gap: .4rem; min-width: 10rem; }
         .filter-field label, .form-field label { color: #444653; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
         .filter-field input, .filter-field select, .form-field input, .form-field select { min-height: 2.5rem; width: 100%; padding: .55rem .65rem; border: 1px solid #c4c5d5; border-radius: .25rem; background: #fff; color: #191c1e; font: inherit; font-size: .9rem; }
+        .payment-nominal { -moz-appearance: textfield; }
+        .payment-nominal::-webkit-inner-spin-button, .payment-nominal::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
         .filter-field input:focus, .filter-field select:focus, .form-field input:focus, .form-field select:focus { outline: 0; border-color: #00288e; box-shadow: 0 0 0 2px rgb(0 40 142 / 18%); }
         .empty-state { padding: 2rem 1.25rem; color: #505f76; text-align: center; }
         .form-card { max-width: 48rem; padding: 1.5rem; }
@@ -350,6 +355,28 @@
         .dashboard-links { display: grid; gap: .5rem; padding-top: 1rem; border-top: 1px solid #e0e3e5; }
         .dashboard-links a { display: flex; align-items: center; justify-content: space-between; padding: .65rem .75rem; border-radius: .25rem; color: #444653; font-size: .85rem; text-decoration: none; }
         .dashboard-links a:hover { background: #f2f4f6; color: #00288e; }
+        .expense-page-header { margin-bottom: 1rem; }
+        .expense-page-header .eyebrow { margin-bottom: .45rem; }
+        .expense-entry-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(17rem, .8fr); gap: 1.5rem; align-items: start; }
+        .expense-form-card { max-width: none; padding: 0; overflow: hidden; }
+        .expense-form-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid #c4c5d5; background: linear-gradient(135deg, #f2f6ff, #fff); }
+        .expense-step { display: block; margin-bottom: .35rem; color: #00288e; font-size: .67rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .expense-form-heading h3 { margin: 0; color: #191c1e; font-size: 1.1rem; }
+        .expense-form-heading p { margin: .45rem 0 0; color: #505f76; font-size: .84rem; line-height: 1.55; }
+        .expense-form-body { padding: 1.5rem; }
+        .currency-input-shell { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; min-height: 3.1rem; border: 1px solid #00288e; border-radius: .35rem; background: #fff; overflow: hidden; }
+        .currency-input-shell:focus-within { box-shadow: 0 0 0 3px rgb(0 40 142 / 16%); }
+        .currency-input-shell > span { align-self: stretch; display: flex; align-items: center; padding: 0 .85rem; border-right: 1px solid #c4c5d5; background: #eef4ff; color: #00288e; font-family: "Courier Prime", ui-monospace, monospace; font-weight: 700; }
+        .currency-input-shell input { min-height: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; font-family: "Courier Prime", ui-monospace, monospace; font-size: 1.1rem; font-weight: 700; }
+        .input-help { margin: .1rem 0 0; color: #505f76; font-size: .78rem; line-height: 1.5; }
+        .expense-side-panel { display: grid; gap: 1rem; position: sticky; top: 6.5rem; }
+        .expense-summary-card { padding: 1.25rem; border: 1px solid #c4c5d5; border-radius: .5rem; background: #fff; box-shadow: 0 4px 6px rgb(25 28 30 / 4%); }
+        .expense-summary-card dl { display: grid; gap: .75rem; margin: 1rem 0 0; }
+        .expense-summary-card dl div { display: grid; gap: .2rem; padding-bottom: .75rem; border-bottom: 1px solid #e0e3e5; }
+        .expense-summary-card dl div:last-child { padding-bottom: 0; border-bottom: 0; }
+        .expense-summary-card dt { color: #505f76; font-size: .67rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+        .expense-summary-card dd { margin: 0; color: #191c1e; font-size: .88rem; font-weight: 700; }
+        .expense-summary-card dl div:last-child dd { color: #00288e; font-size: 1.15rem; }
 
         @media (max-width: 760px) {
             .app-shell { display: block; }
@@ -371,8 +398,11 @@
              .file-picker { align-items: stretch; }
              .file-picker-name { min-width: 0; }
             .action-stack { justify-content: start; }
-            .payment-layout { grid-template-columns: 1fr; }
-            .payment-summary { position: static; }
+             .payment-layout { grid-template-columns: 1fr; }
+             .payment-summary { position: static; }
+             .expense-entry-layout { grid-template-columns: 1fr; }
+             .expense-side-panel { position: static; }
+             .expense-page-header .button { width: auto; }
             .receipt-actions, .receipt-actions-group { flex-direction: column; width: 100%; }
             .receipt-paper { padding: 1.5rem; }
             .receipt-school { align-items: start; }
@@ -462,6 +492,7 @@
             </div>
         </form>
     </dialog>
+    @stack('scripts')
     <script>
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {

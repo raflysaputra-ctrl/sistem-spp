@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pembayaran;
+use App\Models\Penerimaan;
 use App\Models\Siswa;
-use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -18,11 +18,9 @@ class DashboardController extends Controller
     {
         $sekarang = now();
         $awalGrafik = $sekarang->copy()->subMonths(5)->startOfMonth();
-        $penerimaanPerBulan = Pembayaran::query()
-            ->where('status', 'aktif')
-            ->whereBetween('tanggal_bayar', [$awalGrafik, $sekarang])
-            ->get(['tanggal_bayar', 'total_bayar'])
-            ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->tanggal_bayar->format('Y-m'))
+        $penerimaanAktif = $this->penerimaanAktif($awalGrafik, $sekarang);
+        $penerimaanPerBulan = $penerimaanAktif
+            ->groupBy(fn ($pembayaran): string => $pembayaran->tanggal_bayar->format('Y-m'))
             ->map(fn ($pembayaran): int => (int) $pembayaran->sum('total_bayar'));
 
         $namaBulanSingkat = [
@@ -47,24 +45,13 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.tu', [
-            'totalPenerimaanBulanIni' => Pembayaran::query()
-                ->where('status', 'aktif')
-                ->whereBetween('tanggal_bayar', [$sekarang->copy()->startOfMonth(), $sekarang->copy()->endOfMonth()])
-                ->sum('total_bayar'),
+            'totalPenerimaanBulanIni' => $this->penerimaanAktif($sekarang->copy()->startOfMonth(), $sekarang->copy()->endOfMonth())->sum('total_bayar'),
             'grafikPenerimaan' => $grafikPenerimaan,
             'dataGrafikPenerimaan' => $dataGrafikPenerimaan,
             'totalPenerimaanEnamBulan' => array_sum(array_column($grafikPenerimaan, 'total')),
             'jumlahSiswaAktif' => Siswa::query()->where('status_siswa', 'aktif')->count(),
-            'jumlahTransaksiHariIni' => Pembayaran::query()
-                ->where('status', 'aktif')
-                ->whereDate('tanggal_bayar', $sekarang->toDateString())
-                ->count(),
-            'transaksiTerbaru' => Pembayaran::query()
-                ->where('status', 'aktif')
-                ->with(['siswa', 'user', 'detailPembayaran.tagihanSpp.siswaKelas.kelas'])
-                ->orderByDesc('tanggal_bayar')
-                ->limit(5)
-                ->get(),
+            'jumlahTransaksiHariIni' => $this->penerimaanAktif($sekarang->copy()->startOfDay(), $sekarang->copy()->endOfDay())->count(),
+            'transaksiTerbaru' => $this->penerimaanAktif()->sortByDesc('tanggal_bayar')->take(5),
         ]);
     }
 
@@ -72,11 +59,8 @@ class DashboardController extends Controller
     {
         $sekarang = now();
         $awalGrafik = $sekarang->copy()->subMonths(5)->startOfMonth();
-        $penerimaanPerBulan = Pembayaran::query()
-            ->where('status', 'aktif')
-            ->whereBetween('tanggal_bayar', [$awalGrafik, $sekarang])
-            ->get(['tanggal_bayar', 'total_bayar'])
-            ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->tanggal_bayar->format('Y-m'))
+        $penerimaanPerBulan = $this->penerimaanAktif($awalGrafik, $sekarang)
+            ->groupBy(fn ($pembayaran): string => $pembayaran->tanggal_bayar->format('Y-m'))
             ->map(fn ($pembayaran): int => (int) $pembayaran->sum('total_bayar'));
 
         $namaBulanSingkat = [
@@ -101,13 +85,24 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.kepala-sekolah', [
-            'totalPenerimaanBulanIni' => Pembayaran::query()
-                ->where('status', 'aktif')
-                ->whereBetween('tanggal_bayar', [$sekarang->copy()->startOfMonth(), $sekarang->copy()->endOfMonth()])
-                ->sum('total_bayar'),
+            'totalPenerimaanBulanIni' => $this->penerimaanAktif($sekarang->copy()->startOfMonth(), $sekarang->copy()->endOfMonth())->sum('total_bayar'),
             'grafikPenerimaan' => $grafikPenerimaan,
             'dataGrafikPenerimaan' => $dataGrafikPenerimaan,
             'totalPenerimaanEnamBulan' => array_sum(array_column($grafikPenerimaan, 'total')),
         ]);
+    }
+
+    private function penerimaanAktif($tanggalMulai = null, $tanggalSelesai = null): Collection
+    {
+        $batasiTanggal = function ($query) use ($tanggalMulai, $tanggalSelesai) {
+            return $query->when(
+                $tanggalMulai && $tanggalSelesai,
+                fn ($query) => $query->whereBetween('tanggal_bayar', [$tanggalMulai, $tanggalSelesai]),
+            );
+        };
+
+        return $batasiTanggal(Penerimaan::query()->where('status', 'aktif'))
+            ->with(['siswa', 'user', 'pembayaranSpp.detailPembayaran.tagihanSpp.siswaKelas.kelas'])
+            ->get();
     }
 }

@@ -13,15 +13,19 @@
         <a class="nav-link {{ request()->routeIs('master.tahun-ajaran.*', 'portal.*.master.tahun-ajaran.*') ? 'active' : '' }}" href="{{ route('master.tahun-ajaran.index') }}">Tahun Ajaran</a>
         <a class="nav-link {{ request()->routeIs('master.tarif-spp.*', 'portal.*.master.tarif-spp.*') ? 'active' : '' }}" href="{{ route('master.tarif-spp.index') }}">Tarif SPP</a>
         <a class="nav-link {{ request()->routeIs('kenaikan-kelas.*', 'portal.*.kenaikan-kelas.*') ? 'active' : '' }}" href="{{ route('kenaikan-kelas.preview') }}">Kenaikan Kelas</a>
+        <a class="nav-link {{ request()->routeIs('master.jenis-pembayaran.*') ? 'active' : '' }}" href="{{ route('master.jenis-pembayaran.index') }}">Jenis Pembayaran</a>
+        <a class="nav-link {{ request()->routeIs('master.kategori-pengeluaran.*') ? 'active' : '' }}" href="{{ route('master.kategori-pengeluaran.index') }}">Kategori Pengeluaran</a>
+        <a class="nav-link {{ request()->routeIs('master.tagihan-non-spp.*') ? 'active' : '' }}" href="{{ route('master.tagihan-non-spp.index') }}">Tagihan Non-SPP</a>
     </div>
 </div>
 
-<div class="navigation-group has-submenu {{ request()->routeIs('riwayat-pembayaran.*', 'portal.*.riwayat-pembayaran.*') ? '' : 'is-collapsed' }}">
+<div class="navigation-group has-submenu {{ request()->routeIs('penerimaan.*', 'pengeluaran.*') ? '' : 'is-collapsed' }}">
     <button class="navigation-group-header" type="button">
         Transaksi<span class="indicator">▼</span>
     </button>
     <div class="navigation-group-content">
-        <a class="nav-link {{ request()->routeIs('riwayat-pembayaran.*', 'portal.*.riwayat-pembayaran.*') ? 'active' : '' }}" href="{{ route('riwayat-pembayaran.index') }}">Pembatalan Transaksi</a>
+        <a class="nav-link {{ request()->routeIs('penerimaan.*') ? 'active' : '' }}" href="{{ route('penerimaan.riwayat') }}">Pembatalan Pembayaran</a>
+        <a class="nav-link {{ request()->routeIs('pengeluaran.*') ? 'active' : '' }}" href="{{ route('pengeluaran.riwayat') }}">Pembatalan Pengeluaran</a>
     </div>
 </div>
 
@@ -30,7 +34,7 @@
         Rekap<span class="indicator">▼</span>
     </button>
     <div class="navigation-group-content">
-        <a class="nav-link {{ request()->routeIs('rekap-pembayaran.*', 'portal.*.rekap-pembayaran.*') ? 'active' : '' }}" href="{{ route('rekap-pembayaran.index') }}">Rekap Pembayaran</a>
+        <a class="nav-link {{ request()->routeIs('rekap-pembayaran.*', 'portal.*.rekap-pembayaran.*') ? 'active' : '' }}" href="{{ route('rekap-pembayaran.index') }}">Rekap Penerimaan</a>
     </div>
 </div>
 

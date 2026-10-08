@@ -21,10 +21,8 @@ class UsePortalSession
         $portal = $request->segment(1);
         $context = $portal === 'siswa' ? 'siswa' : 'web';
 
-        if ($context === 'siswa') {
-            $this->selectContext($context);
-            Auth::shouldUse($context);
-        }
+        $this->selectContext($context);
+        Auth::shouldUse($context);
 
         return $next($request);
     }

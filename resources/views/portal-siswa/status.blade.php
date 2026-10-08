@@ -84,6 +84,8 @@
                     @foreach ($tagihanSpp as $tagihan)
                         @php
                             $pembayaranTagihan = $tagihan->detailPembayaran->first()?->pembayaran;
+                            $penerimaanTagihan = $pembayaranTagihan?->penerimaan;
+                            $arsipKwitansi = $penerimaanTagihan?->arsipKwitansi ?? $pembayaranTagihan?->arsipKwitansi;
                             $periodeTransaksi = $pembayaranTagihan?->detailPembayaran
                                 ->sortBy(fn ($detail) => sprintf('%04d%02d', $detail->tagihanSpp->tahun, $detail->tagihanSpp->bulan))
                                 ->map(fn ($detail) => $namaBulan[$detail->tagihanSpp->bulan].' '.$detail->tagihanSpp->tahun)
@@ -97,31 +99,62 @@
                             </div>
                             <div class="period-meta">
                                 <div><span class="meta-label">Tanggal Bayar</span><strong>{{ $pembayaranTagihan?->tanggal_bayar?->format('d/m/Y') ?? '-' }}</strong></div>
-                                <div><span class="meta-label">Foto Kwitansi</span><strong>{{ $pembayaranTagihan?->arsipKwitansi ? 'Sudah diunggah' : '-' }}</strong></div>
+                                <div><span class="meta-label">Foto Kwitansi</span><strong>{{ $arsipKwitansi ? 'Sudah diunggah' : '-' }}</strong></div>
                             </div>
 
                             @if ($pembayaranTagihan)
-                                @if ($pembayaranTagihan->arsipKwitansi)
+                                @if ($arsipKwitansi)
                                     <span class="badge uploaded">Foto kwitansi sudah diunggah</span>
                                 @endif
                                 <details class="upload-panel">
-                                    <summary>{{ $pembayaranTagihan->arsipKwitansi ? 'Ganti foto kwitansi' : 'Unggah foto kwitansi' }}</summary>
+                                    <summary>{{ $arsipKwitansi ? 'Ganti foto kwitansi' : 'Unggah foto kwitansi' }}</summary>
                                     <div class="transaction">
                                         <dl>
-                                            <div><dt>Nomor Kwitansi</dt><dd>{{ $pembayaranTagihan->no_kwitansi }}</dd></div>
+                                            <div><dt>Nomor Kwitansi</dt><dd>{{ $penerimaanTagihan?->no_kwitansi ?? $pembayaranTagihan->no_kwitansi }}</dd></div>
                                             <div><dt>Tanggal Pembayaran</dt><dd>{{ $pembayaranTagihan->tanggal_bayar->format('d/m/Y') }}</dd></div>
                                             <div><dt>Seluruh Periode SPP</dt><dd>{{ $periodeTransaksi }}</dd></div>
                                         </dl>
                                     </div>
-                                    <form class="form" method="POST" action="{{ $pembayaranTagihan->arsipKwitansi ? route('siswa.kwitansi.update') : route('siswa.kwitansi.store') }}" enctype="multipart/form-data">
+                                    <form class="form" method="POST" action="{{ $arsipKwitansi ? route('siswa.kwitansi.update') : route('siswa.kwitansi.store') }}" enctype="multipart/form-data">
                                         @csrf
-                                        @if ($pembayaranTagihan->arsipKwitansi) @method('PATCH') @endif
-                                        <input name="id_pembayaran" type="hidden" value="{{ $pembayaranTagihan->id_pembayaran }}">
-                                        <label for="{{ $formId }}">{{ $pembayaranTagihan->arsipKwitansi ? 'Foto kwitansi pengganti' : 'Foto kwitansi' }} (JPEG atau PNG, maksimal 2 MB)<input id="{{ $formId }}" name="foto" type="file" accept="image/jpeg,image/png" required></label>
-                                        <button class="primary" type="submit">{{ $pembayaranTagihan->arsipKwitansi ? 'Ganti Foto' : 'Simpan Foto' }}</button>
+                                        @if ($arsipKwitansi) @method('PATCH') @endif
+                                        @if ($penerimaanTagihan)
+                                            <input name="id_penerimaan" type="hidden" value="{{ $penerimaanTagihan->id_penerimaan }}">
+                                        @else
+                                            <input name="id_pembayaran" type="hidden" value="{{ $pembayaranTagihan->id_pembayaran }}">
+                                        @endif
+                                        <label for="{{ $formId }}">{{ $arsipKwitansi ? 'Foto kwitansi pengganti' : 'Foto kwitansi' }} (JPEG atau PNG, maksimal 2 MB)<input id="{{ $formId }}" name="foto" type="file" accept="image/jpeg,image/png" required></label>
+                                        <button class="primary" type="submit">{{ $arsipKwitansi ? 'Ganti Foto' : 'Simpan Foto' }}</button>
                                     </form>
                                 </details>
                             @endif
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+
+            @if ($penerimaanNonSppSaja->isNotEmpty())
+                <div class="section-heading"><h2>Kwitansi Pembayaran Lainnya</h2></div>
+                <div class="period-grid">
+                    @foreach ($penerimaanNonSppSaja as $penerimaan)
+                        @php
+                            $jenis = $penerimaan->pembayaranNonSpp->detailPembayaranNonSpp
+                                ->pluck('tagihanPembayaran.jenisPembayaran.nama_jenis')->filter()->unique()->implode(', ');
+                            $formId = 'foto-penerimaan-'.$penerimaan->id_penerimaan;
+                        @endphp
+                        <article class="period-card">
+                            <div class="period-header"><h3>{{ $jenis }}</h3><span class="badge paid">Sudah dibayar</span></div>
+                            <div class="transaction"><dl><div><dt>Nomor Kwitansi</dt><dd>{{ $penerimaan->no_kwitansi }}</dd></div><div><dt>Tanggal</dt><dd>{{ $penerimaan->tanggal_bayar->format('d/m/Y') }}</dd></div></dl></div>
+                            <details class="upload-panel">
+                                <summary>{{ $penerimaan->arsipKwitansi ? 'Ganti foto kwitansi' : 'Unggah foto kwitansi' }}</summary>
+                                <form class="form" method="POST" action="{{ $penerimaan->arsipKwitansi ? route('siswa.kwitansi.update') : route('siswa.kwitansi.store') }}" enctype="multipart/form-data">
+                                    @csrf
+                                    @if ($penerimaan->arsipKwitansi) @method('PATCH') @endif
+                                    <input name="id_penerimaan" type="hidden" value="{{ $penerimaan->id_penerimaan }}">
+                                    <label for="{{ $formId }}">Foto kwitansi (JPEG atau PNG, maksimal 2 MB)<input id="{{ $formId }}" name="foto" type="file" accept="image/jpeg,image/png" required></label>
+                                    <button class="primary" type="submit">{{ $penerimaan->arsipKwitansi ? 'Ganti Foto' : 'Simpan Foto' }}</button>
+                                </form>
+                            </details>
                         </article>
                     @endforeach
                 </div>

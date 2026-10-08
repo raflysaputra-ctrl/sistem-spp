@@ -3,7 +3,7 @@
 
 **Status:** Draft Desain Revisi  
 **Pendekatan:** AS-IS + TO-BE  
-**Catatan:** Struktur penerimaan non-SPP dan pengeluaran belum final sampai requirement pihak TU selesai.
+**Catatan:** Struktur penerimaan non-SPP masih mengikuti keputusan per jenis. Struktur pengeluaran R6 telah dikonfirmasi untuk scope tanpa bukti, metode pembayaran, nomor transaksi, atau approval.
 
 ---
 
@@ -187,7 +187,7 @@ Keputusan revisi:
 
 ---
 
-## 10. PROPOSED: jenis_pembayaran
+## 10. R3: jenis_pembayaran
 
 Tujuan konseptual:
 
@@ -202,38 +202,81 @@ Contoh kandidat jenis:
 
 Namun kolom final, tipe pembayaran, aturan tarif, relasi tagihan, dan business rule belum final.
 
-Status: **PROPOSED / DO NOT IMPLEMENT YET**.
+Implementasi R3 menambahkan metadata berikut melalui migration baru:
+
+- `aturan_pembayaran`: `sekali_bayar` atau `cicilan`;
+- `tipe_periode`: `semester`, `gelombang`, atau `tahunan`.
+
+Aturan ini dipakai saat Admin membuat tagihan dan disnapshot ke tagihan (`bisa_cicil`) agar perubahan master di masa depan tidak mengubah aturan transaksi yang sudah diterbitkan.
+
+Status: **IMPLEMENTED FOR R3**.
+
+### 10.1 R3: tagihan_pembayaran dan kwitansi multi-tagihan
+
+`tagihan_pembayaran` tetap terpisah dari `tagihan_spp` agar business rule SPP tidak berubah. Tagihan non-SPP memiliki `kode_periode` dengan unique constraint:
+
+```text
+(id_siswa, id_jenis_pembayaran, id_tahun_ajaran, kode_periode)
+```
+
+Sebelum unique constraint periode diterapkan, migration preflight memeriksa seluruh kombinasi legacy siswa, jenis pembayaran, dan tahun ajaran. Upgrade dihentikan bila ditemukan lebih dari satu tagihan pada kombinasi tersebut agar default periode tidak menyebabkan migrasi schema parsial atau mengubah klasifikasi histori.
+
+Satu kwitansi non-SPP disimpan pada `pembayaran_non_spp` sebagai header transaksi, sedangkan rincian alokasi disimpan di `detail_pembayaran_non_spp`.
+
+```text
+PembayaranNonSpp (1 kwitansi)
+        ↓
+DetailPembayaranNonSpp (1..n tagihan non-SPP)
+        ↓
+TagihanPembayaran
+```
+
+Satu detail menyimpan nominal pembayaran dan snapshot `total_terbayar_setelah` agar kwitansi lama tidak berubah ketika terjadi cicilan berikutnya. FK menggunakan pembatasan hapus untuk menjaga histori.
+
+Pembatalan dilakukan pada level header kwitansi dan menghitung ulang status setiap tagihan dari detail pembayaran aktif. Untuk tagihan cicilan, pembatalan ditolak jika akan menyisakan pembayaran aktif lebih dari nol tetapi kurang dari `minimal_dp`.
 
 ---
 
-## 11. PROPOSED: Pengeluaran
+## 11. R4: Header Penerimaan Gabungan
 
-Calon entitas yang mungkin dibutuhkan:
+Transaksi baru menggunakan `penerimaan` sebagai header satu kwitansi untuk satu siswa. Header dapat memiliki paling banyak satu transaksi SPP dan satu transaksi non-SPP:
 
-- kategori pengeluaran;
-- transaksi pengeluaran.
+```text
+Penerimaan
+  ├── Pembayaran SPP -> DetailPembayaran -> TagihanSpp
+  └── PembayaranNonSpp -> DetailPembayaranNonSpp -> TagihanPembayaran
+```
 
-Data minimal secara konsep:
-
-- tanggal;
-- kategori;
-- keterangan;
-- nominal;
-- user pencatat.
-
-Detail schema final belum boleh ditentukan sampai pihak TU mengonfirmasi:
-
-- kategori;
-- bukti transaksi;
-- koreksi/pembatalan;
-- pihak yang berwenang;
-- kebutuhan pelaporan.
-
-Status: **PROPOSED / DO NOT IMPLEMENT YET**.
+Relasi `id_penerimaan` pada tabel pembayaran bersifat nullable agar seluruh histori lama tetap valid. Nomor kwitansi yang dicetak berasal dari `penerimaan`; nomor transaksi child tetap dipertahankan sebagai identitas internal. `arsip_kwitansi_siswa.id_penerimaan` menyimpan satu foto untuk satu kwitansi gabungan.
 
 ---
 
-## 12. Relationship yang Harus Tetap Aman pada Fase Awal
+## 12. R6: Pengeluaran
+
+Tabel `kategori_pengeluaran` menyimpan master kategori dengan nama lengkap dan status aktif. Kategori yang sudah tidak dipakai dinonaktifkan agar histori tetap memiliki referensi yang valid.
+
+Tabel `pengeluaran` menyimpan transaksi uang keluar dengan struktur:
+
+- `id_kategori_pengeluaran`;
+- `id_user` sebagai pencatat TU;
+- `tanggal_pengeluaran`;
+- `keterangan`;
+- `nominal`;
+- status `aktif` atau `dibatalkan`;
+- alasan, pelaku, dan waktu pembatalan.
+
+Relasi `Pengeluaran -> KategoriPengeluaran` dan `Pengeluaran -> User` memakai foreign key `restrictOnDelete`. Tidak ada tabel atau kolom bukti, metode pembayaran, nomor transaksi, maupun approval pada scope R6. Pembatalan tidak menghapus row transaksi.
+
+Kategori awal disediakan melalui seeder:
+
+- Alat Tulis Kantor;
+- Listrik dan Internet;
+- Pemeliharaan Sarana;
+- Kegiatan Sekolah.
+
+---
+
+## 13. Relationship yang Harus Tetap Aman pada Fase Awal
 
 ```text
 User -> Pembayaran
@@ -278,7 +321,7 @@ Detail implementasi teknis enum harus menyesuaikan DBMS/project dan diuji sebelu
 
 ## 14. Database Change Gate
 
-Sebelum membuat schema untuk penerimaan non-SPP/pengeluaran, requirement berikut wajib tersedia:
+Sebelum membuat schema untuk penerimaan non-SPP, requirement berikut wajib tersedia:
 
 - jenis penerimaan;
 - aturan tarif;
@@ -287,8 +330,4 @@ Sebelum membuat schema untuk penerimaan non-SPP/pengeluaran, requirement berikut
 - cicilan;
 - aturan kwitansi;
 - hubungan dengan Portal Siswa;
-- kategori pengeluaran;
-- bukti pengeluaran;
-- mekanisme koreksi/pembatalan pengeluaran.
-
-Jika belum tersedia, implementasi database harus berhenti pada perubahan role yang sudah disetujui.
+Untuk Pengeluaran, schema R6 hanya boleh diperluas setelah kategori, bukti, koreksi/pembatalan, pihak berwenang, dan kebutuhan pelaporan baru dikonfirmasi.

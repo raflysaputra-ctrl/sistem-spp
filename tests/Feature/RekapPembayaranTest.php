@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\DetailPembayaranNonSpp;
+use App\Models\JenisPembayaran;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\PembayaranNonSpp;
 use App\Models\Siswa;
 use App\Models\SiswaKelas;
+use App\Models\TagihanPembayaran;
 use App\Models\TagihanSpp;
 use App\Models\TahunAjaran;
 use App\Models\TarifSpp;
@@ -141,8 +145,66 @@ class RekapPembayaranTest extends TestCase
             ->assertDontSee('Agustus 2037');
     }
 
+    public function test_recap_distinguishes_spp_and_a_multi_bill_non_spp_receipt(): void
+    {
+        [$user, $pembayaranSpp, , $siswa, $tahunAjaran] = $this->buatPembayaranDuaPeriode();
+        $pembayaranNonSpp = $this->buatPenerimaanNonSpp($user, $siswa, $tahunAjaran);
+
+        $response = $this->actingAs($user)
+            ->get(route('rekap-pembayaran.index'))
+            ->assertOk()
+            ->assertSeeText([
+                'Rekap Penerimaan',
+                'Penerimaan SPP',
+                'Penerimaan Non-SPP',
+                $pembayaranSpp->no_kwitansi,
+                $pembayaranNonSpp->no_kwitansi,
+                'PTS Rekap',
+                'PKL Rekap',
+                'Rp 600.000',
+            ]);
+
+        $this->assertSame(1, substr_count($response->getContent(), $pembayaranNonSpp->no_kwitansi));
+
+        $this->get(route('rekap-pembayaran.index', ['sumber' => 'spp']))
+            ->assertOk()
+            ->assertSee($pembayaranSpp->no_kwitansi)
+            ->assertDontSee($pembayaranNonSpp->no_kwitansi);
+
+        $this->get(route('rekap-pembayaran.index', ['sumber' => 'non_spp']))
+            ->assertOk()
+            ->assertSee($pembayaranNonSpp->no_kwitansi)
+            ->assertDontSee($pembayaranSpp->no_kwitansi);
+
+        $excel = $this->get(route('rekap-pembayaran.export.excel', ['sumber' => 'semua']));
+        $this->assertStringContainsString($pembayaranSpp->no_kwitansi, $excel->streamedContent());
+        $this->assertStringNotContainsString($pembayaranNonSpp->no_kwitansi, $excel->streamedContent());
+    }
+
+    public function test_recap_filters_cancelled_non_spp_receipts_and_hides_actions_from_kepala_sekolah(): void
+    {
+        [$user, , , $siswa, $tahunAjaran] = $this->buatPembayaranDuaPeriode();
+        $pembayaranNonSpp = $this->buatPenerimaanNonSpp($user, $siswa, $tahunAjaran);
+        $pembayaranNonSpp->update(['status' => 'dibatalkan']);
+
+        $this->actingAs($user)
+            ->get(route('rekap-pembayaran.index', ['sumber' => 'non_spp']))
+            ->assertOk()
+            ->assertDontSee($pembayaranNonSpp->no_kwitansi);
+
+        $kepalaSekolah = User::factory()->kepalaSekolah()->create();
+        $this->actingAs($kepalaSekolah)
+            ->get(route('rekap-pembayaran.index', [
+                'sumber' => 'non_spp',
+                'status' => 'dibatalkan',
+            ]))
+            ->assertOk()
+            ->assertSeeText([$pembayaranNonSpp->no_kwitansi, 'Dibatalkan'])
+            ->assertDontSee('href="'.route('riwayat-pembayaran-non-spp.show', $pembayaranNonSpp).'"', false);
+    }
+
     /**
-     * @return array{0: User, 1: Pembayaran, 2: Jurusan, 3: Siswa}
+     * @return array{0: User, 1: Pembayaran, 2: Jurusan, 3: Siswa, 4: TahunAjaran}
      */
     private function buatPembayaranDuaPeriode(): array
     {
@@ -198,6 +260,71 @@ class RekapPembayaranTest extends TestCase
             Carbon::setTestNow();
         }
 
-        return [$user, $pembayaran, $jurusan, $siswa];
+        return [$user, $pembayaran, $jurusan, $siswa, $tahunAjaran];
+    }
+
+    private function buatPenerimaanNonSpp(User $user, Siswa $siswa, TahunAjaran $tahunAjaran): PembayaranNonSpp
+    {
+        $pts = JenisPembayaran::create([
+            'kode_jenis' => 'RKP_PTS',
+            'nama_jenis' => 'PTS Rekap',
+            'aturan_pembayaran' => JenisPembayaran::ATURAN_SEKALI_BAYAR,
+            'tipe_periode' => JenisPembayaran::TIPE_PERIODE_SEMESTER,
+            'aktif' => true,
+        ]);
+        $pkl = JenisPembayaran::create([
+            'kode_jenis' => 'RKP_PKL',
+            'nama_jenis' => 'PKL Rekap',
+            'aturan_pembayaran' => JenisPembayaran::ATURAN_CICILAN,
+            'tipe_periode' => JenisPembayaran::TIPE_PERIODE_TAHUNAN,
+            'aktif' => true,
+        ]);
+        $tagihanPts = TagihanPembayaran::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_jenis_pembayaran' => $pts->id_jenis_pembayaran,
+            'id_tahun_ajaran' => $tahunAjaran->id_tahun_ajaran,
+            'total_tagihan' => 75_000,
+            'minimal_dp' => 0,
+            'bisa_cicil' => false,
+            'kode_periode' => 'semester_1',
+            'periode_keterangan' => 'Semester 1',
+            'status' => 'lunas',
+            'created_by' => $user->id_user,
+        ]);
+        $tagihanPkl = TagihanPembayaran::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_jenis_pembayaran' => $pkl->id_jenis_pembayaran,
+            'id_tahun_ajaran' => $tahunAjaran->id_tahun_ajaran,
+            'total_tagihan' => 225_000,
+            'minimal_dp' => 100_000,
+            'bisa_cicil' => true,
+            'kode_periode' => 'tahunan',
+            'periode_keterangan' => 'Satu kali per tahun ajaran',
+            'status' => 'lunas',
+            'created_by' => $user->id_user,
+        ]);
+        $pembayaran = PembayaranNonSpp::create([
+            'no_kwitansi' => 'NSP-RKP-001',
+            'id_siswa' => $siswa->id_siswa,
+            'id_user' => $user->id_user,
+            'tanggal_bayar' => '2037-08-15 10:00:00',
+            'nominal_bayar' => 300_000,
+            'status' => 'aktif',
+        ]);
+
+        DetailPembayaranNonSpp::create([
+            'id_pembayaran_non_spp' => $pembayaran->id_pembayaran_non_spp,
+            'id_tagihan_pembayaran' => $tagihanPts->id_tagihan_pembayaran,
+            'nominal_bayar' => 75_000,
+            'total_terbayar_setelah' => 75_000,
+        ]);
+        DetailPembayaranNonSpp::create([
+            'id_pembayaran_non_spp' => $pembayaran->id_pembayaran_non_spp,
+            'id_tagihan_pembayaran' => $tagihanPkl->id_tagihan_pembayaran,
+            'nominal_bayar' => 225_000,
+            'total_terbayar_setelah' => 225_000,
+        ]);
+
+        return $pembayaran;
     }
 }

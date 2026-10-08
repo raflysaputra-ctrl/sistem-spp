@@ -22,6 +22,10 @@ class AuthenticatedSessionController extends Controller
 
     public function store(LoginRequest $request): RedirectResponse
     {
+        if (Auth::guard('web')->check()) {
+            return $this->redirectToDashboard(Auth::guard('web')->user());
+        }
+
         $request->authenticate();
         $request->session()->regenerate();
 

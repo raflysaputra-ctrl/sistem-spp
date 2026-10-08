@@ -15,6 +15,7 @@ class Pembayaran extends Model
 
     protected $fillable = [
         'no_kwitansi',
+        'id_penerimaan',
         'id_siswa',
         'id_user',
         'tanggal_bayar',
@@ -38,6 +39,11 @@ class Pembayaran extends Model
     public function siswa(): BelongsTo
     {
         return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa')->withTrashed();
+    }
+
+    public function penerimaan(): BelongsTo
+    {
+        return $this->belongsTo(Penerimaan::class, 'id_penerimaan', 'id_penerimaan');
     }
 
     public function user(): BelongsTo

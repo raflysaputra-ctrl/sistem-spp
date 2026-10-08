@@ -28,7 +28,7 @@ class LayoutNavigationTest extends TestCase
                 'Tarif SPP',
                 'Kenaikan Kelas',
                 'Pembatalan Transaksi',
-                'Rekap Pembayaran',
+                'Rekap Penerimaan',
                 'Backup Data',
                 'Pending',
             ])
@@ -50,25 +50,27 @@ class LayoutNavigationTest extends TestCase
             ->assertSeeText([
                 'Tata Usaha',
                 'Penerimaan',
-                'SPP',
-                'UJIKOM',
-                'Pembayaran Lainnya',
+                'Input Pembayaran',
+                'Riwayat Pembayaran',
                 'Pengeluaran',
                 'Input Pengeluaran',
                 'Riwayat Pengeluaran',
                 'Kelola Pembayaran',
-                'Riwayat Pembayaran',
                 'Arsip Kwitansi Siswa',
                 'Status Pembayaran SPP',
                 'Laporan / Rekap',
                 'Laporan Tunggakan',
             ])
-            ->assertSee('href="'.route('pembayaran.index').'"', false)
+            ->assertSee('href="'.route('penerimaan.index').'"', false)
+            ->assertSee('href="'.route('penerimaan.riwayat').'"', false)
             ->assertSee('href="'.route('arsip-kwitansi.index').'"', false)
             ->assertSee('href="'.route('status-spp.index').'"', false)
             ->assertDontSee('href="'.route('master.siswa.index').'"', false)
+            ->assertDontSee('href="'.route('riwayat-pembayaran.index').'"', false)
+            ->assertDontSee('href="'.route('riwayat-pembayaran-non-spp.index').'"', false)
             ->assertDontSeeText('Pembatalan Transaksi')
-            ->assertSee('aria-disabled="true"', false);
+            ->assertDontSeeText('UJIKOM')
+            ->assertDontSeeText('Pembayaran Lainnya');
     }
 
     public function test_kepala_sekolah_sees_read_only_navigation_only(): void
